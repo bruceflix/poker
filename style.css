@@ -983,3 +983,182 @@ html, body {
     border-top: 1px solid rgba(255,255,255,0.1);
     margin: 20px 0;
 }
+
+/* ====== CHIP DOTS ====== */
+.chip-dots {
+    display: inline-flex;
+    gap: 2px;
+    vertical-align: middle;
+    margin-right: 4px;
+}
+
+.chip-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid;
+    display: inline-block;
+    flex-shrink: 0;
+    box-shadow: inset 0 1px 2px rgba(255,255,255,0.25), 0 1px 2px rgba(0,0,0,0.7);
+}
+
+/* ====== YOUR TURN INDICATOR ====== */
+.your-turn-indicator {
+    font-size: 0.6rem;
+    font-weight: bold;
+    color: #000;
+    background: #ffd700;
+    padding: 2px 7px;
+    border-radius: 4px;
+    letter-spacing: 1px;
+    text-align: center;
+    margin-bottom: 3px;
+    animation: yourTurnFlash 0.75s ease-in-out infinite;
+}
+
+.your-turn-indicator.hidden {
+    display: none;
+}
+
+@keyframes yourTurnFlash {
+    0%, 100% { background: #ffd700; box-shadow: 0 0 6px rgba(255,215,0,0.5); }
+    50%       { background: #fffde7; box-shadow: 0 0 16px rgba(255,215,0,1); }
+}
+
+.active-player {
+    box-shadow: 0 0 30px rgba(255,215,0,0.6), inset 0 0 20px rgba(255,215,0,0.12);
+    animation: activePulse 1.4s ease-in-out infinite;
+}
+
+@keyframes activePulse {
+    0%, 100% { box-shadow: 0 0 25px rgba(255,215,0,0.5), inset 0 0 15px rgba(255,215,0,0.08); }
+    50%       { box-shadow: 0 0 45px rgba(255,215,0,0.8), inset 0 0 25px rgba(255,215,0,0.18); }
+}
+
+.active-player .player-name {
+    color: #ffd700;
+    text-shadow: 0 0 8px rgba(255,215,0,0.6);
+}
+
+/* ====== WINNER OVERLAY ====== */
+#winner-overlay {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 200;
+    text-align: center;
+    pointer-events: none;
+    max-width: 90vw;
+}
+
+#winner-overlay.hidden {
+    display: none;
+}
+
+.winner-banner {
+    background: rgba(0,0,0,0.94);
+    border: 3px solid #ffd700;
+    border-radius: 22px;
+    padding: 22px 44px;
+    min-width: 380px;
+    box-shadow: 0 0 80px rgba(255,215,0,0.45), inset 0 0 40px rgba(255,215,0,0.04);
+    animation: winnerAppear 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes winnerAppear {
+    from { transform: scale(0.55); opacity: 0; }
+    to   { transform: scale(1);    opacity: 1; }
+}
+
+.winner-trophy { font-size: 2.2rem; line-height: 1; margin-bottom: 4px; }
+
+.winner-name-big {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #ffd700;
+    text-shadow: 0 0 20px rgba(255,215,0,0.8);
+    line-height: 1.15;
+}
+
+.winner-wins-amount {
+    font-size: 1rem;
+    color: #aed581;
+    margin: 4px 0 8px;
+}
+
+.winner-hand-type {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #fff;
+    margin: 4px 0 2px;
+}
+
+.winner-hand-detail {
+    font-size: 0.85rem;
+    color: #aaa;
+    font-style: italic;
+    margin-bottom: 10px;
+}
+
+.winner-best-cards {
+    display: flex;
+    gap: 5px;
+    justify-content: center;
+    margin: 10px 0 6px;
+    flex-wrap: wrap;
+}
+
+.winner-best-cards .card {
+    width: 44px !important;
+    height: 62px !important;
+    box-shadow: 0 0 10px rgba(255,215,0,0.7) !important;
+    border-color: #ffd700 !important;
+    border-width: 2px !important;
+}
+
+.winner-best-cards .card-rank { font-size: 1rem !important; }
+.winner-best-cards .card-suit { font-size: 0.95rem !important; }
+
+.winner-others {
+    margin-top: 10px;
+    border-top: 1px solid rgba(255,255,255,0.12);
+    padding-top: 8px;
+}
+
+.winner-others-entry {
+    font-size: 0.8rem;
+    color: #999;
+    margin: 2px 0;
+}
+
+/* ====== LAST HAND DISPLAY ====== */
+#last-hand-display {
+    margin-top: 6px;
+}
+
+#last-hand-display.hidden { display: none; }
+
+.last-hand-pill {
+    display: inline-block;
+    background: rgba(0,0,0,0.45);
+    border: 1px solid rgba(255,215,0,0.2);
+    border-radius: 12px;
+    padding: 3px 12px;
+}
+
+.last-hand-label {
+    font-size: 0.6rem;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    display: block;
+}
+
+.last-hand-text {
+    font-size: 0.78rem;
+    color: #bbb;
+}
+
+.lh-winner { color: #ffd700; font-weight: bold; }
+.lh-hand   { color: #aed581; }

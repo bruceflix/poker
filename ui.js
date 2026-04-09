@@ -29,6 +29,39 @@ const UI = (() => {
 
     let positions = [];
     let bgColor = '#0d4b1e'; // default green
+    let lastHandResult = null;
+    let overlayShownForHand = -1;
+
+    // Traditional poker chip colour scheme
+    const CHIP_DENOMS = [
+        { v: 25000, bg: '#7B0000', bd: '#C41E3A' },
+        { v: 5000,  bg: '#B5006E', bd: '#FF4DB5' },
+        { v: 1000,  bg: '#D84315', bd: '#FF8A65' },
+        { v: 500,   bg: '#6A1B9A', bd: '#CE93D8' },
+        { v: 100,   bg: '#1C1C1C', bd: '#757575' },
+        { v: 25,    bg: '#1B5E20', bd: '#66BB6A' },
+        { v: 10,    bg: '#0D47A1', bd: '#64B5F6' },
+        { v: 5,     bg: '#B71C1C', bd: '#FF7043' },
+        { v: 1,     bg: '#CFD8DC', bd: '#90A4AE' },
+    ];
+
+    function renderChipDots(amount) {
+        if (!amount || amount <= 0) return '';
+        let remaining = amount;
+        const dots = [];
+        for (const d of CHIP_DENOMS) {
+            if (remaining <= 0 || dots.length >= 5) break;
+            const count = Math.floor(remaining / d.v);
+            if (count > 0) {
+                const show = Math.min(count, 2);
+                for (let i = 0; i < show && dots.length < 5; i++) {
+                    dots.push(`<span class="chip-dot" style="background:${d.bg};border-color:${d.bd}"></span>`);
+                }
+                remaining -= count * d.v;
+            }
+        }
+        return dots.length ? `<span class="chip-dots">${dots.join('')}</span>` : '';
+    }
 
     const BG_PRESETS = [
         { name: 'Classic Green', color: '#0d4b1e', grad: 'radial-gradient(ellipse at center, #1a6b2e 0%, #0d4b1e 50%, #092f14 100%)' },
@@ -286,8 +319,10 @@ const UI = (() => {
                     <div id="blind-timer"></div>
                     <div id="blind-alert" class="blind-alert hidden"></div>
                     <div id="showdown-info" class="hidden"></div>
+                    <div id="last-hand-display" class="hidden"></div>
                 </div>
                 <div id="player-sections"></div>
+                <div id="winner-overlay" class="hidden"></div>
             </div>
             <div id="settings-overlay" class="overlay hidden"></div>
         `;
@@ -316,6 +351,7 @@ const UI = (() => {
 
     function buildPlayerHTML(p, i) {
         return `
+            <div class="your-turn-indicator hidden" id="turn-${i}">&#9658; YOUR TURN</div>
             <div class="player-name">${escHtml(p.name)}</div>
             <div class="player-badge" id="badge-${i}"></div>
             <div class="player-cards" id="cards-${i}"></div>
@@ -353,14 +389,15 @@ const UI = (() => {
             updatePlayer(state, p, i);
         });
 
-        if (state.phase === 'showdown' && state.showdownResults) {
-            showShowdownResults(state);
-        } else if (state.phase === 'handOver' && state.showdownResults) {
-            showHandOverResults(state);
+        if ((state.phase === 'showdown' || state.phase === 'handOver') && state.showdownResults) {
+            showWinnerOverlay(state);
         } else {
-            const sd = document.getElementById('showdown-info');
-            if (sd) sd.classList.add('hidden');
+            const overlayEl = document.getElementById('winner-overlay');
+            if (overlayEl) overlayEl.classList.add('hidden');
         }
+        const sd = document.getElementById('showdown-info');
+        if (sd && state.phase !== 'gameOver') sd.classList.add('hidden');
+        updateLastHandDisplay(state);
     }
 
     function updateCommunityCards(state) {
@@ -429,6 +466,9 @@ const UI = (() => {
         section.style.top = pos.top + '%';
         section.style.transform = `translate(-50%, -50%) rotate(${pos.rot}deg)`;
 
+        const turnEl = document.getElementById(`turn-${i}`);
+        if (turnEl) turnEl.classList.toggle('hidden', !isActive);
+
         // Badge
         const badge = document.getElementById(`badge-${i}`);
         if (badge && !p.eliminated) {
@@ -470,7 +510,11 @@ const UI = (() => {
         // Chips
         const chipsEl = document.getElementById(`chips-${i}`);
         if (chipsEl) {
-            chipsEl.textContent = p.eliminated ? '' : `\u{1F4B0} ${p.chips.toLocaleString()}`;
+            if (p.eliminated) {
+                chipsEl.innerHTML = '';
+            } else {
+                chipsEl.innerHTML = renderChipDots(p.chips) + p.chips.toLocaleString();
+            }
         }
 
         // Bet — only show during active betting phases
@@ -677,34 +721,84 @@ const UI = (() => {
         });
     }
 
-    function showShowdownResults(state) {
-        const el = document.getElementById('showdown-info');
-        if (!el) return;
-        el.classList.remove('hidden');
-        let html = '<div class="showdown-results">';
-        for (const result of state.showdownResults) {
-            const winnerNames = result.winners.map(w => w.name).join(' & ');
-            const handDesc = result.winners[0].hand ? result.winners[0].hand.description : '';
-            html += `<div class="showdown-winner">
-                <span class="winner-name">${escHtml(winnerNames)}</span> wins ${result.pot.toLocaleString()}
-                ${handDesc ? `<br><span class="winning-hand">${handDesc}</span>` : ''}
-            </div>`;
-        }
-        html += '</div>';
-        el.innerHTML = html;
-    }
+    function showWinnerOverlay(state) {
+        // Don't recreate if already shown for this hand
+        if (state.handNumber === overlayShownForHand) return;
+        overlayShownForHand = state.handNumber;
 
-    function showHandOverResults(state) {
-        const el = document.getElementById('showdown-info');
-        if (!el || !state.showdownResults) return;
-        el.classList.remove('hidden');
+        const overlay = document.getElementById('winner-overlay');
+        if (!overlay || !state.showdownResults) return;
+
         const result = state.showdownResults[0];
         if (!result) return;
+
+        // Save for last-hand display
+        lastHandResult = result;
+
+        const isShowdown = state.phase === 'showdown';
         const winnerNames = result.winners.map(w => w.name).join(' & ');
-        el.innerHTML = `<div class="showdown-results">
-            <div class="showdown-winner">
-                <span class="winner-name">${escHtml(winnerNames)}</span> wins ${result.pot.toLocaleString()}
-            </div>
+        const hand = result.winners[0].hand;
+
+        // Best 5 winning cards
+        let bestCardsHtml = '';
+        if (hand && hand.cards && hand.cards.length > 0) {
+            bestCardsHtml = `<div class="winner-best-cards">
+                ${hand.cards.map(c => renderCard(c, true)).join('')}
+            </div>`;
+        }
+
+        // Losing hands (showdown only)
+        let othersHtml = '';
+        if (isShowdown && result.allHands && result.allHands.length > 1) {
+            const losers = result.allHands.filter(h =>
+                !result.winners.some(w => w.seatIndex === h.seatIndex)
+            );
+            if (losers.length > 0) {
+                othersHtml = `<div class="winner-others">
+                    ${losers.map(h =>
+                        `<div class="winner-others-entry">${escHtml(h.name)}: ${escHtml(h.hand.description)}</div>`
+                    ).join('')}
+                </div>`;
+            }
+        }
+
+        const trophy     = isShowdown ? '&#127942;' : '&#128176;';
+        const winsText   = `wins ${result.pot.toLocaleString()} chips${!isShowdown ? ' (uncontested)' : ''}`;
+        const handName   = hand ? hand.handName : '';
+        const handDetail = hand && hand.description !== handName ? hand.description : '';
+
+        overlay.innerHTML = `<div class="winner-banner">
+            <div class="winner-trophy">${trophy}</div>
+            <div class="winner-name-big">${escHtml(winnerNames)}</div>
+            <div class="winner-wins-amount">${winsText}</div>
+            ${handName   ? `<div class="winner-hand-type">${escHtml(handName)}</div>`     : ''}
+            ${handDetail ? `<div class="winner-hand-detail">${escHtml(handDetail)}</div>` : ''}
+            ${bestCardsHtml}
+            ${othersHtml}
+        </div>`;
+
+        overlay.classList.remove('hidden');
+    }
+
+    function updateLastHandDisplay(state) {
+        const el = document.getElementById('last-hand-display');
+        if (!el) return;
+        const showIn = ['preflop','flop','turn','river','idle'];
+        if (!showIn.includes(state.phase) || !lastHandResult) {
+            el.classList.add('hidden');
+            return;
+        }
+        const winner = lastHandResult.winners[0];
+        const hand   = winner && winner.hand;
+        const winnerName = lastHandResult.winners.map(w => w.name).join(' & ');
+        const handText   = hand ? hand.description : 'uncontested';
+        el.classList.remove('hidden');
+        el.innerHTML = `<div class="last-hand-pill">
+            <span class="last-hand-label">Last Hand</span>
+            <span class="last-hand-text">
+                <span class="lh-winner">${escHtml(winnerName)}</span>
+                &nbsp;&middot;&nbsp;<span class="lh-hand">${escHtml(handText)}</span>
+            </span>
         </div>`;
     }
 
