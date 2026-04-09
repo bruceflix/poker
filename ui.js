@@ -1,21 +1,22 @@
 // ui.js — Table rendering, config screen, settings overlay, save/load
 
 const UI = (() => {
-    // Seat positions: [left%, top%, rotation degrees]
-    // Pulled inward from edges so sections never clip at 1080p
+    // Seat positions: perfectly symmetric about both axes.
+    // Exact pixel margin from edge is handled by repositionPlayersToEdge().
     const SEAT_POSITIONS = [
-        { left: 22, top: 85, rot: 0 },      // P1: bottom-left
-        { left: 8,  top: 62, rot: 90 },      // P2: left-lower
-        { left: 8,  top: 30, rot: 90 },      // P3: left-upper
-        { left: 22, top: 12, rot: 180 },     // P4: top-left
-        { left: 60, top: 12, rot: 180 },     // P5: top-right
-        { left: 82, top: 30, rot: 270 },     // P6: right-upper
-        { left: 82, top: 62, rot: 270 },     // P7: right-lower
-        { left: 60, top: 85, rot: 0 },       // P8: bottom-right
+        { left: 25, top: 88, rot: 0   },  // P1: bottom-left
+        { left: 8,  top: 65, rot: 90  },  // P2: left-lower
+        { left: 8,  top: 35, rot: 90  },  // P3: left-upper
+        { left: 25, top: 12, rot: 180 },  // P4: top-left
+        { left: 75, top: 12, rot: 180 },  // P5: top-right
+        { left: 92, top: 35, rot: 270 },  // P6: right-upper
+        { left: 92, top: 65, rot: 270 },  // P7: right-lower
+        { left: 75, top: 88, rot: 0   },  // P8: bottom-right
     ];
 
     function getPositionsForCount(n) {
-        if (n >= 8) return SEAT_POSITIONS.slice(0, 8);
+        const all = SEAT_POSITIONS.slice(0, 8);
+        if (n >= 8) return all.map(p => ({ ...p }));
         const mapping = {
             2: [0, 4],
             3: [0, 3, 5],
@@ -24,45 +25,65 @@ const UI = (() => {
             6: [0, 1, 3, 4, 6, 7],
             7: [0, 1, 2, 4, 5, 6, 7],
         };
-        return (mapping[n] || []).map(i => SEAT_POSITIONS[i]);
+        return (mapping[n] || []).map(i => ({ ...SEAT_POSITIONS[i] }));
+    }
+
+    // repositionPlayersToEdge: after DOM render, nudge each player section so
+    // the edge it faces is exactly EDGE_MARGIN px from the screen boundary.
+    // This works at any resolution (1080p, 4K, ultrawide, etc.).
+    const EDGE_MARGIN = 10;
+
+    function repositionPlayersToEdge() {
+        const W = window.innerWidth;
+        const H = window.innerHeight;
+        positions.forEach((pos, i) => {
+            const section = document.getElementById(`player-${i}`);
+            if (!section) return;
+            const rect = section.getBoundingClientRect();
+            let dl = 0, dt = 0;
+            switch (pos.rot) {
+                case 90:  dl = EDGE_MARGIN - rect.left; break;               // left side → push right until left edge = EDGE_MARGIN
+                case 270: dl = (W - EDGE_MARGIN) - rect.right; break;        // right side → push left until right edge = W - EDGE_MARGIN
+                case 180: dt = EDGE_MARGIN - rect.top; break;                // top → push down until top edge = EDGE_MARGIN
+                default:  dt = (H - EDGE_MARGIN) - rect.bottom; break;       // bottom → push up until bottom edge = H - EDGE_MARGIN
+            }
+            if (dl !== 0) { pos.left += dl / W * 100; section.style.left = pos.left + '%'; }
+            if (dt !== 0) { pos.top  += dt / H * 100; section.style.top  = pos.top  + '%'; }
+        });
     }
 
     let positions = [];
+    let _resizeHandler = null;
     let bgColor = '#0d4b1e'; // default green
     let lastHandResult = null;
     let historyOpenFor = -1;
     let overlayShownForHand = -1;
     let lastRenderedPhase = null;
 
-    // Traditional poker chip colour scheme
+    // Casino chip colour scheme with labeled denominations
     const CHIP_DENOMS = [
-        { v: 25000, bg: '#7B0000', bd: '#C41E3A' },
-        { v: 5000,  bg: '#B5006E', bd: '#FF4DB5' },
-        { v: 1000,  bg: '#D84315', bd: '#FF8A65' },
-        { v: 500,   bg: '#6A1B9A', bd: '#CE93D8' },
-        { v: 100,   bg: '#1C1C1C', bd: '#757575' },
-        { v: 25,    bg: '#1B5E20', bd: '#66BB6A' },
-        { v: 10,    bg: '#0D47A1', bd: '#64B5F6' },
-        { v: 5,     bg: '#B71C1C', bd: '#FF7043' },
-        { v: 1,     bg: '#CFD8DC', bd: '#90A4AE' },
+        { v: 1000, bg: '#B71C1C', bd: '#FF5252', fg: '#fff', label: '1K'  },
+        { v: 500,  bg: '#7D6608', bd: '#D4AC0D', fg: '#fff', label: '500' },
+        { v: 100,  bg: '#1C1C1C', bd: '#757575', fg: '#fff', label: '100' },
+        { v: 50,   bg: '#0D2F7E', bd: '#4472CA', fg: '#fff', label: '50'  },
+        { v: 25,   bg: '#1B5E20', bd: '#4CAF50', fg: '#fff', label: '25'  },
     ];
 
-    function renderChipDots(amount) {
+    function renderChips(amount) {
         if (!amount || amount <= 0) return '';
         let remaining = amount;
-        const dots = [];
+        const stacks = [];
         for (const d of CHIP_DENOMS) {
-            if (remaining <= 0 || dots.length >= 5) break;
             const count = Math.floor(remaining / d.v);
-            if (count > 0) {
-                const show = Math.min(count, 2);
-                for (let i = 0; i < show && dots.length < 5; i++) {
-                    dots.push(`<span class="chip-dot" style="background:${d.bg};border-color:${d.bd}"></span>`);
-                }
-                remaining -= count * d.v;
-            }
+            if (count > 0) { stacks.push({ ...d, count }); remaining -= count * d.v; }
         }
-        return dots.length ? `<span class="chip-dots">${dots.join('')}</span>` : '';
+        if (stacks.length === 0) return '';
+        return stacks.map(s =>
+            `<div class="chip" style="background:${s.bg};border-color:${s.bd};color:${s.fg}">
+                <span class="chip-label">${s.label}</span>
+                <span class="chip-count">×${s.count}</span>
+            </div>`
+        ).join('');
     }
 
     const BG_PRESETS = [
@@ -310,6 +331,21 @@ const UI = (() => {
         app.style.backgroundImage = preset.grad;
 
         positions = getPositionsForCount(state.players.length);
+        if (_resizeHandler) window.removeEventListener('resize', _resizeHandler);
+        _resizeHandler = () => {
+            positions = getPositionsForCount(state.players.length);
+            state.players.forEach((_, i) => {
+                const s = document.getElementById(`player-${i}`);
+                if (s && positions[i]) {
+                    const p = positions[i];
+                    s.style.left = p.left + '%';
+                    s.style.top  = p.top  + '%';
+                    s.style.transform = `translate(-50%,-50%) rotate(${p.rot}deg)`;
+                }
+            });
+            requestAnimationFrame(repositionPlayersToEdge);
+        };
+        window.addEventListener('resize', _resizeHandler);
 
         app.innerHTML = `
             <div id="table">
@@ -332,7 +368,6 @@ const UI = (() => {
                 <div id="winner-overlay" class="hidden"></div>
             </div>
             <div id="settings-overlay" class="overlay hidden"></div>
-            <div id="hand-history-panel"></div>
         `;
 
         const sections = document.getElementById('player-sections');
@@ -347,6 +382,9 @@ const UI = (() => {
             section.innerHTML = buildPlayerHTML(p, i);
             sections.appendChild(section);
         });
+
+        // Nudge all sections to their nearest screen edge after layout
+        requestAnimationFrame(repositionPlayersToEdge);
 
         document.getElementById('pauseBtn').addEventListener('click', () => {
             App.togglePause();
@@ -518,10 +556,12 @@ const UI = (() => {
             badge.innerHTML = '';
         }
 
-        // Cards
+        // Cards (or inline hand history)
         const cardsEl = document.getElementById(`cards-${i}`);
         if (cardsEl) {
-            if (p.eliminated || p.cards.length === 0) {
+            if (historyOpenFor === i) {
+                cardsEl.innerHTML = buildHandHistoryInline(p, state);
+            } else if (p.eliminated || p.cards.length === 0) {
                 cardsEl.innerHTML = '';
             } else if ((state.phase === 'showdown') && !p.folded) {
                 cardsEl.innerHTML = p.cards.map(c => renderCard(c, true)).join('');
@@ -538,7 +578,7 @@ const UI = (() => {
             if (p.eliminated) {
                 chipsEl.innerHTML = '';
             } else {
-                chipsEl.innerHTML = renderChipDots(p.chips) + p.chips.toLocaleString();
+                chipsEl.innerHTML = `<div class="chip-stack">${renderChips(p.chips)}</div><div class="chips-total">${p.chips.toLocaleString()}</div>`;
             }
         }
 
@@ -612,70 +652,30 @@ const UI = (() => {
         </div>`;
     }
 
-    // ---- HAND HISTORY PANEL ----
+    // ---- HAND HISTORY (inline in card box) ----
     function toggleHandHistory(playerIndex, state) {
-        const panel = document.getElementById('hand-history-panel');
-        if (!panel) return;
-
-        if (historyOpenFor === playerIndex) {
-            // Close
-            historyOpenFor = -1;
-            panel.classList.remove('visible');
-            return;
-        }
-
-        historyOpenFor = playerIndex;
-        showHandHistoryPanel(playerIndex, state, panel);
+        historyOpenFor = (historyOpenFor === playerIndex) ? -1 : playerIndex;
+        updateTable(state);
     }
 
-    function showHandHistoryPanel(playerIndex, state, panel) {
-        const p = state.players[playerIndex];
-        if (!p) return;
+    function buildHandHistoryInline(p, state) {
+        const history = (p.handHistory || [])
+            .filter(e => e.handNum !== state.handNumber)  // exclude current hand
+            .slice(-5).reverse();                          // most recent first
 
-        const history = p.handHistory || [];
-        const section = document.getElementById(`player-${playerIndex}`);
-
-        let entriesHtml;
         if (history.length === 0) {
-            entriesHtml = `<div class="hh-empty">No hands played yet</div>`;
-        } else {
-            entriesHtml = [...history].reverse().map(entry => {
-                const cardsHtml = entry.cards.map(c => {
-                    const isRed = c.suit <= 1;
-                    const symbol = Game.RANK_SYMBOLS[c.rank];
-                    const suitChar = Game.SUIT_SYMBOLS[Game.SUITS[c.suit]];
-                    return `<div class="hh-card ${isRed?'red':'black'}">${symbol}<br>${suitChar}</div>`;
-                }).join('');
-                return `
-                    <div class="hh-entry">
-                        <div class="hh-entry-label">Hand #${entry.handNum}</div>
-                        <div class="hh-cards">${cardsHtml}</div>
-                    </div>
-                `;
-            }).join('');
+            return '<div class="hh-inline"><span class="hh-no-history">No past hands</span></div>';
         }
 
-        const keys = Controls.getKeyMap(playerIndex);
-        panel.innerHTML = `
-            <div class="hh-title">${escHtml(p.name)} — Last Hands</div>
-            ${entriesHtml}
-            <div class="hh-close-hint">Press <kbd>${keys[1].toUpperCase()}</kbd> to close</div>
-        `;
-        panel.classList.add('visible');
+        const rows = history.map(entry => {
+            const cardsHtml = entry.cards.map(c => renderCard(c, true)).join('');
+            return `<div class="hh-row">
+                <span class="hh-row-label">H${entry.handNum}</span>
+                <div class="hh-row-cards">${cardsHtml}</div>
+            </div>`;
+        }).join('');
 
-        // Position near player section
-        if (section) {
-            const rect = section.getBoundingClientRect();
-            const panelW = 240;
-            let left = rect.left + rect.width / 2 - panelW / 2;
-            let top = rect.bottom + 10;
-            // Keep on screen
-            left = Math.max(8, Math.min(left, window.innerWidth - panelW - 8));
-            if (top + 280 > window.innerHeight) top = rect.top - 290;
-            panel.style.left = left + 'px';
-            panel.style.top = top + 'px';
-            panel.style.width = panelW + 'px';
-        }
+        return `<div class="hh-inline">${rows}</div>`;
     }
 
     // ---- SETTINGS OVERLAY ----
