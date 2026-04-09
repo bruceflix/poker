@@ -351,6 +351,7 @@ const UI = (() => {
             <div id="table">
                 <div id="table-controls">
                     <button id="pauseBtn" class="table-btn" title="Pause/Resume">&#9646;&#9646;</button>
+                    <button id="muteBtn" class="table-btn" title="Mute/Unmute">${Audio.isMuted() ? '🔇' : '🔊'}</button>
                     <button id="settingsBtn" class="table-btn" title="Settings">&#9881;</button>
                 </div>
                 <div id="pause-banner" class="hidden">PAUSED</div>
@@ -388,6 +389,10 @@ const UI = (() => {
 
         document.getElementById('pauseBtn').addEventListener('click', () => {
             App.togglePause();
+        });
+        document.getElementById('muteBtn').addEventListener('click', () => {
+            const nowMuted = Audio.toggleMute();
+            document.getElementById('muteBtn').textContent = nowMuted ? '🔇' : '🔊';
         });
         document.getElementById('settingsBtn').addEventListener('click', () => {
             App.togglePause(true); // force pause

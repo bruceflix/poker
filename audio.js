@@ -2,6 +2,7 @@
 
 const Audio = (() => {
     let ctx = null;
+    let muted = localStorage.getItem('poker_muted') === '1';
 
     function getCtx() {
         if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -13,6 +14,14 @@ const Audio = (() => {
         if (c.state === 'suspended') c.resume();
         return c;
     }
+
+    function toggleMute() {
+        muted = !muted;
+        localStorage.setItem('poker_muted', muted ? '1' : '0');
+        return muted;
+    }
+
+    function isMuted() { return muted; }
 
     // Unlock audio on first keypress (browser autoplay policy)
     document.addEventListener('keydown', () => {
@@ -54,32 +63,40 @@ const Audio = (() => {
     }
 
     return {
+        toggleMute, isMuted,
+
         cardDeal() {
+            if (muted) return;
             noise(0.08, 0.2);
             tone(800, 0.06, 'sine', 0.1);
         },
 
         cardFlip() {
+            if (muted) return;
             tone(1200, 0.05, 'sine', 0.15);
             tone(1800, 0.04, 'sine', 0.1, 0.03);
         },
 
         chipBet() {
+            if (muted) return;
             tone(2000, 0.04, 'sine', 0.12);
             tone(2500, 0.04, 'sine', 0.1, 0.04);
             tone(3000, 0.03, 'sine', 0.08, 0.07);
         },
 
         fold() {
+            if (muted) return;
             noise(0.12, 0.1);
             tone(300, 0.1, 'sine', 0.08);
         },
 
         check() {
+            if (muted) return;
             tone(600, 0.06, 'square', 0.1);
         },
 
         allIn() {
+            if (muted) return;
             tone(400, 0.15, 'sawtooth', 0.15);
             tone(600, 0.15, 'sawtooth', 0.12, 0.1);
             tone(800, 0.15, 'sawtooth', 0.12, 0.2);
@@ -87,6 +104,7 @@ const Audio = (() => {
         },
 
         win() {
+            if (muted) return;
             tone(523, 0.15, 'square', 0.12);
             tone(659, 0.15, 'square', 0.12, 0.12);
             tone(784, 0.15, 'square', 0.12, 0.24);
@@ -94,23 +112,27 @@ const Audio = (() => {
         },
 
         blindsWarning() {
+            if (muted) return;
             tone(880, 0.15, 'sine', 0.15);
             tone(880, 0.15, 'sine', 0.15, 0.25);
         },
 
         blindsUp() {
+            if (muted) return;
             tone(660, 0.12, 'square', 0.15);
             tone(880, 0.12, 'square', 0.15, 0.12);
             tone(1100, 0.2, 'square', 0.18, 0.24);
         },
 
         playerBust() {
+            if (muted) return;
             tone(400, 0.2, 'sawtooth', 0.15);
             tone(300, 0.2, 'sawtooth', 0.12, 0.15);
             tone(200, 0.3, 'sawtooth', 0.1, 0.3);
         },
 
         gameOver() {
+            if (muted) return;
             const notes = [523, 659, 784, 1047, 784, 1047, 1319];
             notes.forEach((n, i) => {
                 tone(n, 0.2, 'square', 0.15, i * 0.15);
