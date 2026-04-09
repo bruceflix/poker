@@ -352,6 +352,10 @@ const Game = (() => {
 
     function getAvailableActions(playerIndex) {
         if (!canAct(playerIndex)) return [];
+        // No actions allowed outside of betting phases
+        if (state.phase !== 'preflop' && state.phase !== 'flop' && state.phase !== 'turn' && state.phase !== 'river') {
+            return [];
+        }
         const p = state.players[playerIndex];
         const actions = [];
 
