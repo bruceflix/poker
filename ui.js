@@ -31,6 +31,7 @@ const UI = (() => {
     let bgColor = '#0d4b1e'; // default green
     let lastHandResult = null;
     let overlayShownForHand = -1;
+    let lastRenderedPhase = null;
 
     // Traditional poker chip colour scheme
     const CHIP_DENOMS = [
@@ -383,6 +384,16 @@ const UI = (() => {
         if (pauseBtn) {
             pauseBtn.innerHTML = state.paused ? '&#9654;' : '&#9646;&#9646;';
             pauseBtn.title = state.paused ? 'Resume' : 'Pause';
+        }
+
+        // On every phase transition, force-clear all bet displays
+        // before individual player updates run (guards against any stale state)
+        if (state.phase !== lastRenderedPhase) {
+            lastRenderedPhase = state.phase;
+            state.players.forEach((_, i) => {
+                const betEl = document.getElementById(`bet-${i}`);
+                if (betEl) { betEl.textContent = ''; betEl.className = 'player-bet'; }
+            });
         }
 
         state.players.forEach((p, i) => {

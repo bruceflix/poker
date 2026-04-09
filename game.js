@@ -344,6 +344,10 @@ const Game = (() => {
     }
 
     function canAct(playerIndex) {
+        const phase = state.phase;
+        if (phase !== 'preflop' && phase !== 'flop' && phase !== 'turn' && phase !== 'river') {
+            return false;
+        }
         return state.activePlayerIndex === playerIndex &&
                !state.players[playerIndex].eliminated &&
                !state.players[playerIndex].folded &&
