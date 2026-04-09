@@ -398,11 +398,17 @@ const UI = (() => {
     function buildPlayerHTML(p, i) {
         return `
             <div class="your-turn-indicator hidden" id="turn-${i}">&#9658; YOUR TURN</div>
-            <div class="player-name">${escHtml(p.name)}</div>
-            <div class="player-badge" id="badge-${i}"></div>
-            <div class="player-cards" id="cards-${i}"></div>
-            <div class="player-chips" id="chips-${i}"></div>
-            <div class="player-bet" id="bet-${i}"></div>
+            <div class="player-header">
+                <div class="player-name">${escHtml(p.name)}</div>
+                <div class="player-badge" id="badge-${i}"></div>
+            </div>
+            <div class="player-main-row">
+                <div class="player-cards" id="cards-${i}"></div>
+                <div class="player-right-col">
+                    <div class="player-chips" id="chips-${i}"></div>
+                    <div class="player-bet" id="bet-${i}"></div>
+                </div>
+            </div>
             <div class="player-keys" id="keys-${i}"></div>
             <div class="player-bet-sizing hidden" id="sizing-${i}"></div>
             <div class="player-status" id="status-${i}"></div>
