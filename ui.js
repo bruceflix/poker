@@ -30,6 +30,7 @@ const UI = (() => {
     let positions = [];
     let bgColor = '#0d4b1e'; // default green
     let lastHandResult = null;
+    let historyOpenFor = -1;
     let overlayShownForHand = -1;
     let lastRenderedPhase = null;
 
@@ -99,84 +100,89 @@ const UI = (() => {
         const container = document.createElement('div');
         container.className = 'config-container';
 
-        let savesHtml = '';
-        if (saves.length > 0) {
-            savesHtml = `
-                <div class="config-section">
-                    <label>Load Saved Game</label>
-                    <div class="saves-list">
-                        ${saves.map(s => `
-                            <div class="save-row">
-                                <button class="save-load-btn" data-save="${escHtml(s.name)}">
-                                    <strong>${escHtml(s.name)}</strong>
-                                    <small>${s.date} &mdash; Hand #${s.hand}, ${s.playersAlive} players alive</small>
-                                </button>
-                                <button class="save-delete-btn" data-save="${escHtml(s.name)}" title="Delete">X</button>
-                            </div>
-                        `).join('')}
-                    </div>
+        const savesSection = saves.length > 0 ? `
+            <div class="config-saves-section">
+                <label>Load Saved Game</label>
+                <div class="saves-list">
+                    ${saves.map(s => `
+                        <div class="save-row">
+                            <button class="save-load-btn" data-save="${escHtml(s.name)}">
+                                <strong>${escHtml(s.name)}</strong>
+                                <small>Hand #${s.hand} &mdash; ${s.playersAlive} players alive</small>
+                            </button>
+                            <button class="save-delete-btn" data-save="${escHtml(s.name)}" title="Delete">&#10005;</button>
+                        </div>
+                    `).join('')}
                 </div>
-                <hr class="config-divider">
-            `;
-        }
+            </div>
+        ` : '';
 
         container.innerHTML = `
-            <h1>&#9824; TEXAS HOLD'EM &#9829;</h1>
-            <h2>Tournament Setup</h2>
+            <div class="config-hero">
+                <div class="suit-row">&#9824; &#9829; &#9827; &#9830;</div>
+                <h1>Texas Hold'em</h1>
+                <p>Tournament Setup</p>
+            </div>
 
-            ${savesHtml}
+            ${savesSection}
 
-            <div class="config-section">
-                <label>Number of Players</label>
-                <div class="player-count-row">
-                    ${[2,3,4,5,6,7,8].map(n =>
-                        `<button class="count-btn ${n===4?'active':''}" data-count="${n}">${n}</button>`
-                    ).join('')}
+            <div class="config-body">
+                <div class="config-col">
+                    <div class="config-section">
+                        <label>Number of Players</label>
+                        <div class="player-count-row">
+                            ${[2,3,4,5,6,7,8].map(n =>
+                                `<button class="count-btn ${n===4?'active':''}" data-count="${n}">${n}</button>`
+                            ).join('')}
+                        </div>
+                    </div>
+
+                    <div class="config-section">
+                        <label>Player Names &amp; Keys</label>
+                        <div id="playerNameInputs"></div>
+                    </div>
                 </div>
-            </div>
 
-            <div class="config-section">
-                <label>Player Names</label>
-                <div id="playerNameInputs"></div>
-            </div>
+                <div class="config-col">
+                    <div class="config-section">
+                        <label>Starting Chips</label>
+                        <div class="chip-row">
+                            ${[1000,5000,10000,25000].map(c =>
+                                `<button class="chip-btn ${c===5000?'active':''}" data-chips="${c}">${c.toLocaleString()}</button>`
+                            ).join('')}
+                            <input type="number" id="customChips" placeholder="Custom" min="100" step="100">
+                        </div>
+                    </div>
 
-            <div class="config-section">
-                <label>Starting Chips</label>
-                <div class="chip-row">
-                    ${[1000,5000,10000,25000].map(c =>
-                        `<button class="chip-btn ${c===5000?'active':''}" data-chips="${c}">${c.toLocaleString()}</button>`
-                    ).join('')}
-                    <input type="number" id="customChips" placeholder="Custom" min="100" step="100">
-                </div>
-            </div>
+                    <div class="config-section">
+                        <label>Blind Structure</label>
+                        <div class="blind-row">
+                            ${['turbo','standard','deep'].map(b =>
+                                `<button class="blind-btn ${b==='standard'?'active':''}" data-blind="${b}">
+                                    ${b.charAt(0).toUpperCase()+b.slice(1)}
+                                    <small>${b==='turbo'?'3 min':b==='standard'?'8 min':'15 min'} levels</small>
+                                </button>`
+                            ).join('')}
+                        </div>
+                    </div>
 
-            <div class="config-section">
-                <label>Blind Structure</label>
-                <div class="blind-row">
-                    ${['turbo','standard','deep'].map(b =>
-                        `<button class="blind-btn ${b==='standard'?'active':''}" data-blind="${b}">
-                            ${b.charAt(0).toUpperCase()+b.slice(1)}
-                            <small>${b==='turbo'?'3 min':b==='standard'?'8 min':'15 min'} levels</small>
-                        </button>`
-                    ).join('')}
-                </div>
-            </div>
+                    <div class="config-section">
+                        <label>Table Colour</label>
+                        <div class="bg-row">
+                            ${BG_PRESETS.map((p, i) =>
+                                `<button class="bg-btn ${i===0?'active':''}" data-bg="${i}" style="background:${p.color}"
+                                    title="${p.name}"></button>`
+                            ).join('')}
+                        </div>
+                    </div>
 
-            <div class="config-section">
-                <label>Table Colour</label>
-                <div class="bg-row">
-                    ${BG_PRESETS.map((p, i) =>
-                        `<button class="bg-btn ${i===0?'active':''}" data-bg="${i}" style="background:${p.color}"
-                            title="${p.name}"></button>`
-                    ).join('')}
-                </div>
-            </div>
-
-            <div class="config-section">
-                <label>Seat Assignment</label>
-                <div class="seat-row">
-                    <button class="seat-btn active" data-seat="random">Random</button>
-                    <button class="seat-btn" data-seat="manual">As Entered</button>
+                    <div class="config-section">
+                        <label>Seat Assignment</label>
+                        <div class="seat-row">
+                            <button class="seat-btn active" data-seat="random">Random</button>
+                            <button class="seat-btn" data-seat="manual">As Entered</button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -326,6 +332,7 @@ const UI = (() => {
                 <div id="winner-overlay" class="hidden"></div>
             </div>
             <div id="settings-overlay" class="overlay hidden"></div>
+            <div id="hand-history-panel"></div>
         `;
 
         const sections = document.getElementById('player-sections');
@@ -466,6 +473,13 @@ const UI = (() => {
 
         const isActive = state.activePlayerIndex === i && !p.eliminated && !p.folded && !p.allIn;
 
+        // Auto-close history panel when it's this player's turn
+        if (isActive && historyOpenFor === i) {
+            historyOpenFor = -1;
+            const panel = document.getElementById('hand-history-panel');
+            if (panel) panel.classList.remove('visible');
+        }
+
         section.className = 'player-section' +
             (isActive ? ' active-player' : '') +
             (p.eliminated ? ' eliminated' : '') +
@@ -548,9 +562,9 @@ const UI = (() => {
                 keysEl.innerHTML = labels.map((label, k) =>
                     `<span class="key-label"><kbd>${keys[k].toUpperCase()}</kbd> ${label}</span>`
                 ).join('');
-            } else {
+            } else if (!p.eliminated) {
                 const keys = Controls.getKeyMap(i);
-                keysEl.innerHTML = `<span class="key-label peek-only"><kbd>${keys[0].toUpperCase()}</kbd> PEEK</span>`;
+                keysEl.innerHTML = `<span class="key-label peek-only"><kbd>${keys[0].toUpperCase()}</kbd> PEEK &nbsp; <kbd>${keys[1].toUpperCase()}</kbd> HISTORY</span>`;
             }
         }
 
@@ -596,6 +610,72 @@ const UI = (() => {
             <span class="card-rank">${symbol}</span>
             <span class="card-suit">${suitChar}</span>
         </div>`;
+    }
+
+    // ---- HAND HISTORY PANEL ----
+    function toggleHandHistory(playerIndex, state) {
+        const panel = document.getElementById('hand-history-panel');
+        if (!panel) return;
+
+        if (historyOpenFor === playerIndex) {
+            // Close
+            historyOpenFor = -1;
+            panel.classList.remove('visible');
+            return;
+        }
+
+        historyOpenFor = playerIndex;
+        showHandHistoryPanel(playerIndex, state, panel);
+    }
+
+    function showHandHistoryPanel(playerIndex, state, panel) {
+        const p = state.players[playerIndex];
+        if (!p) return;
+
+        const history = p.handHistory || [];
+        const section = document.getElementById(`player-${playerIndex}`);
+
+        let entriesHtml;
+        if (history.length === 0) {
+            entriesHtml = `<div class="hh-empty">No hands played yet</div>`;
+        } else {
+            entriesHtml = [...history].reverse().map(entry => {
+                const cardsHtml = entry.cards.map(c => {
+                    const isRed = c.suit <= 1;
+                    const symbol = Game.RANK_SYMBOLS[c.rank];
+                    const suitChar = Game.SUIT_SYMBOLS[Game.SUITS[c.suit]];
+                    return `<div class="hh-card ${isRed?'red':'black'}">${symbol}<br>${suitChar}</div>`;
+                }).join('');
+                return `
+                    <div class="hh-entry">
+                        <div class="hh-entry-label">Hand #${entry.handNum}</div>
+                        <div class="hh-cards">${cardsHtml}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        const keys = Controls.getKeyMap(playerIndex);
+        panel.innerHTML = `
+            <div class="hh-title">${escHtml(p.name)} — Last Hands</div>
+            ${entriesHtml}
+            <div class="hh-close-hint">Press <kbd>${keys[1].toUpperCase()}</kbd> to close</div>
+        `;
+        panel.classList.add('visible');
+
+        // Position near player section
+        if (section) {
+            const rect = section.getBoundingClientRect();
+            const panelW = 240;
+            let left = rect.left + rect.width / 2 - panelW / 2;
+            let top = rect.bottom + 10;
+            // Keep on screen
+            left = Math.max(8, Math.min(left, window.innerWidth - panelW - 8));
+            if (top + 280 > window.innerHeight) top = rect.top - 290;
+            panel.style.left = left + 'px';
+            panel.style.top = top + 'px';
+            panel.style.width = panelW + 'px';
+        }
     }
 
     // ---- SETTINGS OVERLAY ----
@@ -859,6 +939,7 @@ const UI = (() => {
 
     return {
         showConfig, showTable, updateTable, showBlindAlert, showGameOver,
-        applyBg, setCurrentBgIndex, getCurrentBgIndex, BG_PRESETS
+        applyBg, setCurrentBgIndex, getCurrentBgIndex, BG_PRESETS,
+        toggleHandHistory
     };
 })();

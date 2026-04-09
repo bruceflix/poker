@@ -70,6 +70,12 @@ const Controls = (() => {
             return;
         }
 
+        // Key 1 for non-active players = hand history toggle
+        if (keyIndex === 1 && state.activePlayerIndex !== player && !p.folded && !p.eliminated) {
+            if (onAction) onAction(player, 'history', null);
+            return;
+        }
+
         // Non-peek keys only work when it's your turn
         if (state.activePlayerIndex !== player) return;
         if (p.folded || p.allIn) return;

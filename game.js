@@ -60,7 +60,8 @@ const Game = (() => {
                 seatIndex: i,
                 bet: 0,
                 totalBetThisHand: 0,
-                finishPosition: null
+                finishPosition: null,
+                handHistory: []
             })),
             communityCards: [],
             deck: [],
@@ -200,9 +201,11 @@ const Game = (() => {
         state.currentBet = bigBlind();
         state.minRaise = bigBlind();
 
-        // Deal hole cards
+        // Deal hole cards and record in hand history
         for (const p of activePlayers()) {
             p.cards = [state.deck.pop(), state.deck.pop()];
+            p.handHistory.push({ handNum: state.handNumber, cards: [...p.cards] });
+            if (p.handHistory.length > 5) p.handHistory.shift();
         }
 
         // Set first to act pre-flop
@@ -818,6 +821,10 @@ const Game = (() => {
         state.paused = false;
         if (!(state.actedThisRound instanceof Set)) {
             state.actedThisRound = new Set(state.actedThisRound || []);
+        }
+        // Ensure hand history exists for all players (older saves may lack it)
+        for (const p of state.players) {
+            if (!p.handHistory) p.handHistory = [];
         }
     }
 

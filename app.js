@@ -128,6 +128,10 @@ const App = (() => {
     }
 
     function onPlayerAction(playerIndex, action, data) {
+        if (action === 'history') {
+            UI.toggleHandHistory(playerIndex, Game.getState());
+            return;
+        }
         UI.updateTable(Game.getState());
     }
 
