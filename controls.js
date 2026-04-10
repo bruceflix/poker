@@ -1,21 +1,8 @@
 // controls.js — Keyboard input handling for 8 players × 5 keys
 
 const Controls = (() => {
-    // Key mappings: each player has [peek, key2, key3, key4, key5]
-    const KEY_MAP = [
-        ['1', '2', '3', '4', '5'],       // Player 1
-        ['6', '7', '8', '9', '0'],       // Player 2
-        ['q', 'w', 'e', 'r', 't'],       // Player 3
-        ['y', 'u', 'i', 'o', 'p'],       // Player 4
-        ['a', 's', 'd', 'f', 'g'],       // Player 5
-        ['h', 'j', 'k', 'l', ';'],       // Player 6
-        ['z', 'x', 'c', 'v', 'b'],       // Player 7
-        ['n', 'm', ',', '.', '/'],        // Player 8
-    ];
-
-    const KEY_LABELS_DEFAULT = ['PEEK', 'FOLD', 'CHECK', 'BET', 'ALL-IN'];
-    const KEY_LABELS_CALL = ['PEEK', 'FOLD', 'CALL', 'RAISE', 'ALL-IN'];
-    const KEY_LABELS_SIZING = ['PEEK', '- BET', 'CANCEL', '+ BET', 'CONFIRM'];
+    // Key bindings and labels live in constants.js — reference via CONSTANTS.*
+    const { KEY_MAP, KEY_LABELS_DEFAULT, KEY_LABELS_CALL, KEY_LABELS_SIZING } = CONSTANTS;
 
     let peekingPlayers = new Set();
     let onAction = null; // callback: (playerIndex, action, data) => void

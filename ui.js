@@ -1,18 +1,8 @@
 // ui.js — Table rendering, config screen, settings overlay, save/load
 
 const UI = (() => {
-    // Seat positions: perfectly symmetric about both axes.
-    // Exact pixel margin from edge is handled by repositionPlayersToEdge().
-    const SEAT_POSITIONS = [
-        { left: 25, top: 88, rot: 0   },  // P1: bottom-left
-        { left: 8,  top: 65, rot: 90  },  // P2: left-lower
-        { left: 8,  top: 35, rot: 90  },  // P3: left-upper
-        { left: 25, top: 12, rot: 180 },  // P4: top-left
-        { left: 75, top: 12, rot: 180 },  // P5: top-right
-        { left: 92, top: 35, rot: 270 },  // P6: right-upper
-        { left: 92, top: 65, rot: 270 },  // P7: right-lower
-        { left: 75, top: 88, rot: 0   },  // P8: bottom-right
-    ];
+    // Layout constants live in constants.js — reference via CONSTANTS.*
+    const { SEAT_POSITIONS, EDGE_MARGIN, CHIP_DENOMS, BG_PRESETS } = CONSTANTS;
 
     function getPositionsForCount(n) {
         const all = SEAT_POSITIONS.slice(0, 8);
@@ -31,7 +21,6 @@ const UI = (() => {
     // repositionPlayersToEdge: after DOM render, nudge each player section so
     // the edge it faces is exactly EDGE_MARGIN px from the screen boundary.
     // This works at any resolution (1080p, 4K, ultrawide, etc.).
-    const EDGE_MARGIN = 10;
 
     function repositionPlayersToEdge() {
         if (!positions.length) return;
@@ -75,14 +64,6 @@ const UI = (() => {
     // from player bet labels to the pot when a betting round ends.
     let lastRenderedBets = {}; // { playerIdx: amount }
 
-    // Casino chip colour scheme with labeled denominations
-    const CHIP_DENOMS = [
-        { v: 1000, bg: '#B71C1C', bd: '#FF5252', fg: '#fff', label: '1K'  },
-        { v: 500,  bg: '#7D6608', bd: '#D4AC0D', fg: '#fff', label: '500' },
-        { v: 100,  bg: '#1C1C1C', bd: '#757575', fg: '#fff', label: '100' },
-        { v: 50,   bg: '#0D2F7E', bd: '#4472CA', fg: '#fff', label: '50'  },
-        { v: 25,   bg: '#1B5E20', bd: '#4CAF50', fg: '#fff', label: '25'  },
-    ];
 
     function renderChips(amount) {
         if (!amount || amount <= 0) return '';
@@ -112,14 +93,6 @@ const UI = (() => {
         }).join('')}</div>`;
     }
 
-    const BG_PRESETS = [
-        { name: 'Classic Green', color: '#0d4b1e', grad: 'radial-gradient(ellipse at center, #1a6b2e 0%, #0d4b1e 50%, #092f14 100%)' },
-        { name: 'Casino Blue', color: '#0a2a4a', grad: 'radial-gradient(ellipse at center, #144a7a 0%, #0a2a4a 50%, #061a30 100%)' },
-        { name: 'Royal Purple', color: '#2a0a4a', grad: 'radial-gradient(ellipse at center, #4a1a7a 0%, #2a0a4a 50%, #1a0630 100%)' },
-        { name: 'Dark Red', color: '#3a0a0a', grad: 'radial-gradient(ellipse at center, #6a1a1a 0%, #3a0a0a 50%, #200606 100%)' },
-        { name: 'Midnight', color: '#0a0a1a', grad: 'radial-gradient(ellipse at center, #1a1a3a 0%, #0a0a1a 50%, #050510 100%)' },
-        { name: 'Charcoal', color: '#1a1a1a', grad: 'radial-gradient(ellipse at center, #2a2a2a 0%, #1a1a1a 50%, #0a0a0a 100%)' },
-    ];
 
     function applyBg(idx) {
         const preset = BG_PRESETS[idx] || BG_PRESETS[0];
@@ -250,7 +223,7 @@ const UI = (() => {
             for (let i = 0; i < playerCount; i++) {
                 const row = document.createElement('div');
                 row.className = 'name-input-row';
-                const keyHint = Controls.KEY_MAP[i].join(' ').toUpperCase();
+                const keyHint = CONSTANTS.KEY_MAP[i].join(' ').toUpperCase();
                 row.innerHTML = `
                     <span class="seat-num">P${i+1}</span>
                     <input type="text" class="player-name-input" data-index="${i}"
@@ -852,9 +825,9 @@ const UI = (() => {
                 <div class="card-back-pattern"></div>
             </div>`;
         }
-        const suit     = Game.SUITS[card.suit];   // 'hearts' | 'diamonds' | 'clubs' | 'spades'
-        const symbol   = Game.RANK_SYMBOLS[card.rank];
-        const suitChar = Game.SUIT_SYMBOLS[suit];
+        const suit     = CONSTANTS.SUITS[card.suit];
+        const symbol   = CONSTANTS.RANK_SYMBOLS[card.rank];
+        const suitChar = CONSTANTS.SUIT_SYMBOLS[suit];
         // Large-print 4-colour: index in all 4 corners + centered pip
         const index = `<span class="card-rank">${symbol}</span><span class="card-suit">${suitChar}</span>`;
         return `<div class="card card-face ${suit}">

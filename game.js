@@ -1,17 +1,8 @@
 // game.js — Core Texas Hold'em tournament engine
 
 const Game = (() => {
-    const SUITS = ['hearts', 'diamonds', 'clubs', 'spades'];
-    const RANK_SYMBOLS = {
-        2:'2',3:'3',4:'4',5:'5',6:'6',7:'7',8:'8',9:'9',10:'10',11:'J',12:'Q',13:'K',14:'A'
-    };
-    const SUIT_SYMBOLS = { hearts:'♥', diamonds:'♦', clubs:'♣', spades:'♠' };
-
-    const BLIND_SCHEDULES = {
-        turbo: { levels: [[25,50],[50,100],[100,200],[150,300],[200,400],[300,600],[500,1000],[1000,2000],[2000,4000]], duration: 180 },
-        standard: { levels: [[25,50],[50,100],[75,150],[100,200],[150,300],[200,400],[300,600],[500,1000],[1000,2000],[2000,4000]], duration: 480 },
-        deep: { levels: [[25,50],[50,100],[75,150],[100,200],[150,300],[200,400],[300,600],[400,800],[500,1000],[750,1500],[1000,2000],[2000,4000]], duration: 900 }
-    };
+    // Card/rank/blind constants live in constants.js — reference via CONSTANTS.*
+    const { SUITS, RANK_SYMBOLS, SUIT_SYMBOLS, BLIND_SCHEDULES } = CONSTANTS;
 
     let state = null;
 
