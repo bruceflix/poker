@@ -830,6 +830,12 @@ const Game = (() => {
         state.onUpdate = cb;
     }
 
+    function setPaused(val) {
+        if (!state) return;
+        state.paused = !!val;
+        notify();
+    }
+
     // Restore state from a saved game object — shallow-clone so future mutations
     // to live state do not corrupt the caller's saved copy.
     function restoreState(saved) {
@@ -854,7 +860,7 @@ const Game = (() => {
     }
 
     return {
-        init, getState, startHand, finishHand, restoreState,
+        init, getState, startHand, finishHand, restoreState, setPaused,
         fold, check, call, raise, allIn,
         canAct, getAvailableActions, getCallAmount, getMinRaise, getMaxRaise,
         enterBetSizing, adjustBet, cancelBetSizing, confirmBet,

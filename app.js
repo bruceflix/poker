@@ -42,9 +42,93 @@ const App = (() => {
         dealNextHand();
     }
 
+    // ---- SAVE VALIDATION ----
+    // Validates the structure of a save data object before attempting to restore it.
+    // Returns { valid: true } or { valid: false, error: string }.
+    function validateSave(data) {
+        if (!data || typeof data !== 'object') {
+            return { valid: false, error: 'Save data is missing or corrupted.' };
+        }
+
+        const gs = data.gameState;
+        if (!gs || typeof gs !== 'object') {
+            return { valid: false, error: 'Save is missing game state.' };
+        }
+
+        // Players array
+        if (!Array.isArray(gs.players) || gs.players.length < 2) {
+            return { valid: false, error: 'Save has invalid player data (need at least 2 players).' };
+        }
+
+        const REQUIRED_PLAYER_FIELDS = ['name', 'chips', 'cards', 'folded', 'allIn', 'eliminated', 'seatIndex', 'bet'];
+        for (let i = 0; i < gs.players.length; i++) {
+            const p = gs.players[i];
+            if (!p || typeof p !== 'object') {
+                return { valid: false, error: `Player ${i + 1} entry is corrupt.` };
+            }
+            for (const field of REQUIRED_PLAYER_FIELDS) {
+                if (!(field in p)) {
+                    return { valid: false, error: `Player ${i + 1} is missing field: "${field}".` };
+                }
+            }
+            if (typeof p.chips !== 'number' || p.chips < 0) {
+                return { valid: false, error: `Player ${i + 1} has invalid chip count.` };
+            }
+        }
+
+        // Phase
+        const VALID_PHASES = ['idle', 'preflop', 'flop', 'turn', 'river', 'showdown', 'handOver', 'gameOver'];
+        if (!VALID_PHASES.includes(gs.phase)) {
+            return { valid: false, error: `Save has unknown game phase: "${gs.phase}".` };
+        }
+
+        // Community cards
+        if (!Array.isArray(gs.communityCards) || gs.communityCards.length > 5) {
+            return { valid: false, error: 'Save has invalid community cards.' };
+        }
+
+        // Pots
+        if (!Array.isArray(gs.pots) || gs.pots.length === 0) {
+            return { valid: false, error: 'Save has invalid pot data.' };
+        }
+
+        // Blind schedule
+        if (!Array.isArray(gs.blindSchedule) || gs.blindSchedule.length === 0) {
+            return { valid: false, error: 'Save has invalid blind schedule.' };
+        }
+
+        // Hand number
+        if (typeof gs.handNumber !== 'number' || gs.handNumber < 0) {
+            return { valid: false, error: 'Save has invalid hand number.' };
+        }
+
+        // Blind level in range
+        if (typeof gs.blindLevel !== 'number' || gs.blindLevel < 0 || gs.blindLevel >= gs.blindSchedule.length) {
+            return { valid: false, error: 'Save has out-of-range blind level.' };
+        }
+
+        return { valid: true, error: null };
+    }
+
     function loadFromSave(saved) {
-        // Restore game state
-        Game.restoreState(saved.gameState);
+        // Validate before touching any game state
+        const check = validateSave(saved);
+        if (!check.valid) {
+            console.error('[SaveLoad] Validation failed:', check.error);
+            alert(`Cannot load save: ${check.error}\n\nReturning to menu.`);
+            start();
+            return;
+        }
+
+        try {
+            Game.restoreState(saved.gameState);
+        } catch (e) {
+            console.error('[SaveLoad] restoreState threw:', e);
+            alert('Failed to restore the saved game — the save may be corrupt.\n\nReturning to menu.');
+            start();
+            return;
+        }
+
         const state = Game.getState();
 
         if (saved.bgIndex !== undefined) {
@@ -81,12 +165,11 @@ const App = (() => {
     function togglePause(forceTo) {
         const state = Game.getState();
         if (!state) return;
-        if (forceTo !== undefined) {
-            state.paused = !!forceTo;
-        } else {
-            state.paused = !state.paused;
-        }
-        UI.updateTable(state, getAckInfo());
+        // Use Game.setPaused so the real state is mutated — getState() returns
+        // a snapshot clone, so direct mutation would have no lasting effect.
+        const next = forceTo !== undefined ? !!forceTo : !state.paused;
+        Game.setPaused(next);
+        UI.updateTable(Game.getState(), getAckInfo());
     }
 
     function onStateUpdate(state) {
@@ -184,13 +267,19 @@ const SaveLoad = (() => {
         const data = saves[name];
         if (!data) return null;
 
-        // Restore Sets
-        const state = JSON.parse(JSON.stringify(data.gameState), (key, val) => {
-            if (val && val.__set) return new Set(val.__set);
-            return val;
-        });
-        data.gameState = state;
-        return data;
+        // Restore Sets, guarded against malformed values
+        let state;
+        try {
+            state = JSON.parse(JSON.stringify(data.gameState), (key, val) => {
+                if (val && typeof val === 'object' && val.__set) return new Set(val.__set);
+                return val;
+            });
+        } catch (e) {
+            console.error('[SaveLoad] Failed to deserialise save:', e);
+            return null;
+        }
+
+        return { ...data, gameState: state };
     }
 
     function remove(name) {
