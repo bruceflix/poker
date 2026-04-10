@@ -93,7 +93,19 @@ const Game = (() => {
         return state;
     }
 
-    function getState() { return state; }
+    // Return a shallow snapshot — callers get fresh array/set references so they
+    // cannot accidentally corrupt live state through the returned object.
+    function getState() {
+        if (!state) return null;
+        return {
+            ...state,
+            players:             state.players.map(p => ({ ...p })),
+            communityCards:      [...state.communityCards],
+            pots:                state.pots.map(p => ({ ...p, eligible: [...p.eligible] })),
+            actedThisRound:      new Set(state.actedThisRound),
+            eliminatedThisHand:  [...state.eliminatedThisHand],
+        };
+    }
 
     function activePlayers() {
         return state.players.filter(p => !p.eliminated);
@@ -242,7 +254,8 @@ const Game = (() => {
     function fold(playerIndex) {
         if (!canAct(playerIndex)) return false;
         state.players[playerIndex].folded = true;
-        state.actedThisRound.add(playerIndex);
+        // Shallow-clone the Set so we never mutate the existing reference
+        state.actedThisRound = new Set([...state.actedThisRound, playerIndex]);
         Audio.fold();
 
         // Check if only one player remains
@@ -259,7 +272,7 @@ const Game = (() => {
         if (!canAct(playerIndex)) return false;
         const p = state.players[playerIndex];
         if (state.currentBet > p.bet) return false; // Must call, not check
-        state.actedThisRound.add(playerIndex);
+        state.actedThisRound = new Set([...state.actedThisRound, playerIndex]);
         Audio.check();
         advanceAction();
         return true;
@@ -279,7 +292,7 @@ const Game = (() => {
         p.chips -= toCall;
         p.bet += toCall;
         p.totalBetThisHand += toCall;
-        state.actedThisRound.add(playerIndex);
+        state.actedThisRound = new Set([...state.actedThisRound, playerIndex]);
         Audio.chipBet();
         advanceAction();
         return true;
@@ -309,7 +322,7 @@ const Game = (() => {
         p.totalBetThisHand += cost;
         state.lastRaiserIndex = playerIndex;
 
-        // Reopens action for everyone except raiser
+        // Reopens action for everyone except raiser — new Set reference
         state.actedThisRound = new Set([playerIndex]);
         Audio.chipBet();
         advanceAction();
@@ -338,7 +351,7 @@ const Game = (() => {
             if (totalBet > state.currentBet) {
                 state.currentBet = totalBet;
             }
-            state.actedThisRound.add(playerIndex);
+            state.actedThisRound = new Set([...state.actedThisRound, playerIndex]);
         }
 
         Audio.allIn();
@@ -505,20 +518,25 @@ const Game = (() => {
 
         const isHeadsUp = activePlayers().length === 2;
 
+        // Use spread assignment so each phase transition produces a new array reference,
+        // preventing stale references held by callers from reflecting new cards.
         switch (state.phase) {
             case 'preflop':
                 state.phase = 'flop';
-                state.communityCards.push(state.deck.pop(), state.deck.pop(), state.deck.pop());
+                state.communityCards = [
+                    ...state.communityCards,
+                    state.deck.pop(), state.deck.pop(), state.deck.pop()
+                ];
                 Audio.cardFlip();
                 break;
             case 'flop':
                 state.phase = 'turn';
-                state.communityCards.push(state.deck.pop());
+                state.communityCards = [...state.communityCards, state.deck.pop()];
                 Audio.cardFlip();
                 break;
             case 'turn':
                 state.phase = 'river';
-                state.communityCards.push(state.deck.pop());
+                state.communityCards = [...state.communityCards, state.deck.pop()];
                 Audio.cardFlip();
                 break;
             case 'river':
@@ -558,10 +576,14 @@ const Game = (() => {
     }
 
     function runOutBoard() {
-        // Deal remaining community cards without betting
-        while (state.communityCards.length < 5) {
-            state.communityCards.push(state.deck.pop());
+        // Build the remaining community cards into a new array — avoids in-place mutation
+        // so any caller holding a reference to the old communityCards array is unaffected.
+        const cards = [...state.communityCards];
+        while (cards.length < 5) {
+            cards.push(state.deck.pop());
         }
+        state.communityCards = cards;
+
         if (state.phase !== 'river') {
             state.phase = 'river';
         }
@@ -615,9 +637,13 @@ const Game = (() => {
         const sameEligible = last && last.eligible.length === eligible.length &&
             last.eligible.every(e => eligible.includes(e));
         if (sameEligible) {
-            last.amount += amount;
+            // Replace last pot with updated amount — new object reference
+            state.pots = [
+                ...state.pots.slice(0, -1),
+                { ...last, amount: last.amount + amount }
+            ];
         } else {
-            state.pots.push({ amount, eligible: [...eligible] });
+            state.pots = [...state.pots, { amount, eligible: [...eligible] }];
         }
     }
 
@@ -706,7 +732,6 @@ const Game = (() => {
 
     function finishHand() {
         // Check for eliminated players
-        let eliminationCount = activePlayers().filter(p => p.chips === 0).length;
         const remainingActive = activePlayers();
         const elimOrder = remainingActive.filter(p => p.chips === 0);
 
@@ -714,7 +739,8 @@ const Game = (() => {
             p.eliminated = true;
             const remainingNow = state.players.filter(pp => !pp.eliminated).length;
             p.finishPosition = remainingNow + 1;
-            state.eliminatedThisHand.push(p);
+            // Spread assignment — new array reference each elimination
+            state.eliminatedThisHand = [...state.eliminatedThisHand, p];
             Audio.playerBust();
         }
 
@@ -813,9 +839,16 @@ const Game = (() => {
         state.onUpdate = cb;
     }
 
-    // Restore state from a saved game object
+    // Restore state from a saved game object — shallow-clone so future mutations
+    // to live state do not corrupt the caller's saved copy.
     function restoreState(saved) {
-        state = saved;
+        state = {
+            ...saved,
+            players:            saved.players.map(p => ({ ...p })),
+            communityCards:     [...(saved.communityCards || [])],
+            pots:               (saved.pots || []).map(p => ({ ...p, eligible: [...(p.eligible || [])] })),
+            eliminatedThisHand: [...(saved.eliminatedThisHand || [])],
+        };
         // Ensure non-serializable defaults
         state.onUpdate = null;
         state.blindTimerInterval = null;

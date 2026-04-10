@@ -15,20 +15,35 @@ const HandEvaluator = (() => {
         const suits = cards.map(c => c.suit);
         const isFlush = suits.every(s => s === suits[0]);
 
-        // Check straight
+        // Deduplicate ranks before straight detection so that any duplicate
+        // ranks (e.g. from edge-case inputs) never produce a false positive
+        // or mask a real straight.
+        const uniqueRanks = [...new Set(ranks)].sort((a, b) => b - a);
+
+        // Standard straight: need 5 consecutive unique ranks.
+        // Sliding-window over uniqueRanks handles duplicates naturally —
+        // a hand with a pair can never produce 5 consecutive unique values.
         let isStraight = false;
         let straightHigh = 0;
-        if (ranks[0] - ranks[4] === 4 && new Set(ranks).size === 5) {
-            isStraight = true;
-            straightHigh = ranks[0];
+
+        if (uniqueRanks.length >= 5) {
+            for (let i = 0; i <= uniqueRanks.length - 5; i++) {
+                if (uniqueRanks[i] - uniqueRanks[i + 4] === 4) {
+                    isStraight = true;
+                    straightHigh = uniqueRanks[i];
+                    break;
+                }
+            }
         }
-        // Wheel: A-2-3-4-5
-        if (ranks[0] === 14 && ranks[1] === 5 && ranks[2] === 4 && ranks[3] === 3 && ranks[4] === 2) {
+
+        // Wheel straight: A-2-3-4-5 (Ace plays low).
+        // Uses .includes() so it works regardless of how many Aces are present.
+        if (!isStraight && uniqueRanks.includes(14) && [2, 3, 4, 5].every(r => uniqueRanks.includes(r))) {
             isStraight = true;
             straightHigh = 5; // 5-high straight
         }
 
-        // Count ranks
+        // Count ranks (use original ranks array for group counting)
         const counts = {};
         for (const r of ranks) counts[r] = (counts[r] || 0) + 1;
         const groups = Object.entries(counts)
