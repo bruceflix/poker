@@ -797,11 +797,13 @@ const UI = (() => {
                 const labels = Controls.getKeyLabels(i);
                 const keys = Controls.getKeyMap(i);
                 keysEl.innerHTML = labels.map((label, k) =>
-                    `<span class="key-label"><kbd>${keys[k].toUpperCase()}</kbd> ${label}</span>`
+                    `<span class="key-label"><kbd>${keys[k].toUpperCase()}</kbd><span class="key-action">${label}</span></span>`
                 ).join('');
             } else {
                 const keys = Controls.getKeyMap(i);
-                keysEl.innerHTML = `<span class="key-label peek-only"><kbd>${keys[0].toUpperCase()}</kbd> PEEK &nbsp; <kbd>${keys[1].toUpperCase()}</kbd> HISTORY</span>`;
+                keysEl.innerHTML =
+                    `<span class="key-label peek-only"><kbd>${keys[0].toUpperCase()}</kbd><span class="key-action">PEEK</span></span>` +
+                    `<span class="key-label peek-only"><kbd>${keys[1].toUpperCase()}</kbd><span class="key-action">HISTORY</span></span>`;
             }
         }
 
