@@ -647,9 +647,10 @@ html, body {
     height: 152px;
 }
 
-.player-cards .card-rank       { font-size: 2rem; }
-.player-cards .card-suit       { font-size: 1.5rem; }
-.player-cards .card-center-pip { font-size: 3.5rem; }
+/* Player hole cards — sizes tuned to 104×152 px */
+.player-cards .card-rank       { font-size: 1.4rem; }
+.player-cards .card-suit       { font-size: 1.1rem; }
+.player-cards .card-center-pip { font-size: 3rem;   }
 
 .player-chips {
     display: flex;
@@ -881,72 +882,77 @@ html, body {
     border-radius: 14px;
 }
 
-#community-cards .card-face { padding: 14px; }
-#community-cards .card-rank { font-size: 4.5rem; }
-#community-cards .card-suit { font-size: 3.5rem; }
-#community-cards .card-center-pip { font-size: 9rem; }
+/* Community cards — sized to fit within 186×258 px */
+#community-cards .card-rank       { font-size: 2.2rem; }
+#community-cards .card-suit       { font-size: 1.8rem; }
+#community-cards .card-center-pip { font-size: 6rem;   }
+#community-cards .card-corner     { padding: 2px; }
+#community-cards .card-corner-tl  { top: 8px;    left: 8px;  }
+#community-cards .card-corner-tr  { top: 8px;    right: 8px; }
+#community-cards .card-corner-bl  { bottom: 8px; left: 8px;  }
+#community-cards .card-corner-br  { bottom: 8px; right: 8px; }
 
-/* ── Copag Jumbo Index 4-colour face ── */
+/* ── Large-print 4-colour card face ── */
 .card-face {
     background: #fff;
     border: 2px solid #bbb;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    padding: 6px;
-    position: relative;
+    position: relative;          /* all children are absolutely placed */
     box-shadow: inset 0 0 0 1px rgba(0,0,0,0.06);
+    overflow: hidden;
 }
 
-/* 4-colour suit palette — Copag standard */
+/* 4-colour suit palette */
 .card-face.hearts   { --suit-color: #C62828; }
 .card-face.diamonds { --suit-color: #1565C0; }
 .card-face.clubs    { --suit-color: #2E7D32; }
 .card-face.spades   { --suit-color: #111111; }
 
-/* Corner index block (top-left and bottom-right) */
+/* Corner index: rank above suit, stacked */
 .card-corner {
+    position: absolute;
     display: flex;
     flex-direction: column;
     align-items: center;
     line-height: 1;
     color: var(--suit-color, #111);
-    z-index: 1;
 }
 
-.card-corner-br {
-    align-self: flex-end;
-    transform: rotate(180deg);
-}
+.card-corner-tl { top: 5px;    left: 5px; }
+.card-corner-tr { top: 5px;    right: 5px; }
+.card-corner-bl { bottom: 5px; left: 5px;  transform: rotate(180deg); }
+.card-corner-br { bottom: 5px; right: 5px; transform: rotate(180deg); }
 
 .card-rank {
-    font-size: 2rem;
+    font-size: 1.4rem;
     font-weight: 900;
     line-height: 1;
     color: inherit;
-    font-family: 'Georgia', 'Times New Roman', serif;
-    letter-spacing: -0.03em;
+    font-family: 'Arial Black', 'Arial', sans-serif;
+    letter-spacing: -0.02em;
+    display: block;
 }
 
 .card-suit {
-    font-size: 1.5rem;
+    font-size: 1.1rem;
     line-height: 1;
     color: inherit;
+    display: block;
     margin-top: 1px;
 }
 
-/* Large central pip */
+/* Large central pip — stays within the card via max-width/height */
 .card-center-pip {
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    font-size: 3.5rem;
+    font-size: 3rem;
     color: var(--suit-color, #111);
     line-height: 1;
     pointer-events: none;
-    opacity: 0.88;
     user-select: none;
+    max-width: 80%;
+    text-align: center;
 }
 
 /* ====== HAND HISTORY INLINE ====== */
@@ -982,10 +988,14 @@ html, body {
     height: 42px;
 }
 
-.hh-row-cards .card-face  { padding: 2px; }
-.hh-row-cards .card-rank  { font-size: 0.65rem; }
-.hh-row-cards .card-suit  { font-size: 0.5rem; }
-.hh-row-cards .card-center-pip { font-size: 0.85rem; }
+/* History cards — 30×42 px, keep indices tiny */
+.hh-row-cards .card-rank       { font-size: 0.58rem; }
+.hh-row-cards .card-suit       { font-size: 0.45rem; }
+.hh-row-cards .card-center-pip { font-size: 0.75rem; }
+.hh-row-cards .card-corner-tl  { top: 2px;    left: 2px;  }
+.hh-row-cards .card-corner-tr  { top: 2px;    right: 2px; }
+.hh-row-cards .card-corner-bl  { bottom: 2px; left: 2px;  }
+.hh-row-cards .card-corner-br  { bottom: 2px; right: 2px; }
 
 .hh-no-history {
     font-size: 0.65rem;
@@ -1036,14 +1046,17 @@ html, body {
 @media (max-width: 1200px) {
     .player-section { min-width: 240px; padding: 7px 10px; }
     .player-cards .card { width: 80px; height: 116px; }
-    .player-cards .card-rank       { font-size: 1.5rem; }
-    .player-cards .card-suit       { font-size: 1.15rem; }
-    .player-cards .card-center-pip { font-size: 2.5rem; }
+    .player-cards .card-rank       { font-size: 1.1rem; }
+    .player-cards .card-suit       { font-size: 0.85rem; }
+    .player-cards .card-center-pip { font-size: 2.2rem; }
     #community-cards .card { width: 120px; height: 168px; border-radius: 10px; }
-    #community-cards .card-face { padding: 10px; }
-    #community-cards .card-rank { font-size: 2.8rem; }
-    #community-cards .card-suit { font-size: 2.2rem; }
-    #community-cards .card-center-pip { font-size: 5.5rem; }
+    #community-cards .card-rank { font-size: 1.6rem; }
+    #community-cards .card-suit { font-size: 1.3rem; }
+    #community-cards .card-center-pip { font-size: 4rem; }
+    #community-cards .card-corner-tl { top: 6px;    left: 6px;  }
+    #community-cards .card-corner-tr { top: 6px;    right: 6px; }
+    #community-cards .card-corner-bl { bottom: 6px; left: 6px;  }
+    #community-cards .card-corner-br { bottom: 6px; right: 6px; }
     .pot-total { font-size: 1.4rem; }
     .chip-slice { width: 42px; height: 10px; border-top-width: 4px; }
     .chip-stack-label { font-size: 0.62rem; }
@@ -1054,14 +1067,17 @@ html, body {
     /* 4K / 2K — edge-hugging handled by JS; scale content up */
     .player-section { min-width: 420px; padding: 14px 18px; }
     .player-cards .card { width: 130px; height: 190px; }
-    .player-cards .card-rank       { font-size: 2.5rem; }
-    .player-cards .card-suit       { font-size: 2rem; }
-    .player-cards .card-center-pip { font-size: 4.5rem; }
+    .player-cards .card-rank       { font-size: 1.8rem; }
+    .player-cards .card-suit       { font-size: 1.4rem; }
+    .player-cards .card-center-pip { font-size: 3.8rem; }
     #community-cards .card { width: 220px; height: 308px; border-radius: 16px; }
-    #community-cards .card-face { padding: 16px; }
-    #community-cards .card-rank { font-size: 5.5rem; }
-    #community-cards .card-suit { font-size: 4.5rem; }
-    #community-cards .card-center-pip { font-size: 11rem; }
+    #community-cards .card-rank { font-size: 2.8rem; }
+    #community-cards .card-suit { font-size: 2.2rem; }
+    #community-cards .card-center-pip { font-size: 8rem; }
+    #community-cards .card-corner-tl { top: 10px;    left: 10px;  }
+    #community-cards .card-corner-tr { top: 10px;    right: 10px; }
+    #community-cards .card-corner-bl { bottom: 10px; left: 10px;  }
+    #community-cards .card-corner-br { bottom: 10px; right: 10px; }
     .player-name { font-size: 1.5rem; }
     .pot-total { font-size: 2.4rem; }
     #blind-info { font-size: 1.4rem; }

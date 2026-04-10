@@ -707,17 +707,14 @@ const UI = (() => {
         const suit     = Game.SUITS[card.suit];   // 'hearts' | 'diamonds' | 'clubs' | 'spades'
         const symbol   = Game.RANK_SYMBOLS[card.rank];
         const suitChar = Game.SUIT_SYMBOLS[suit];
-        // Copag Jumbo Index 4-colour: TL index + centered pip + BR index (rotated)
+        // Large-print 4-colour: index in all 4 corners + centered pip
+        const index = `<span class="card-rank">${symbol}</span><span class="card-suit">${suitChar}</span>`;
         return `<div class="card card-face ${suit}">
-            <div class="card-corner card-corner-tl">
-                <span class="card-rank">${symbol}</span>
-                <span class="card-suit">${suitChar}</span>
-            </div>
+            <div class="card-corner card-corner-tl">${index}</div>
+            <div class="card-corner card-corner-tr">${index}</div>
             <div class="card-center-pip">${suitChar}</div>
-            <div class="card-corner card-corner-br">
-                <span class="card-rank">${symbol}</span>
-                <span class="card-suit">${suitChar}</span>
-            </div>
+            <div class="card-corner card-corner-bl">${index}</div>
+            <div class="card-corner card-corner-br">${index}</div>
         </div>`;
     }
 
