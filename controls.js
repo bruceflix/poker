@@ -24,6 +24,9 @@ const Controls = (() => {
     // Reverse lookup: key string -> { player, keyIndex }
     let keyLookup = {};
 
+    // Guard against duplicate event listeners from multiple init() calls
+    let initialized = false;
+
     function buildLookup(n) {
         numPlayers = n;
         keyLookup = {};
@@ -35,22 +38,29 @@ const Controls = (() => {
     }
 
     function init(playerCount, actionCallback) {
+        // Always destroy first so re-initialisation never stacks listeners
+        destroy();
+
         onAction = actionCallback;
         buildLookup(playerCount);
         document.addEventListener('keydown', handleKeyDown);
         document.addEventListener('keyup', handleKeyUp);
+        initialized = true;
     }
 
     function destroy() {
         document.removeEventListener('keydown', handleKeyDown);
         document.removeEventListener('keyup', handleKeyUp);
         peekingPlayers.clear();
+        initialized = false;
     }
 
     function handleKeyDown(e) {
         // Don't capture if typing in an input
         if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
 
+        // Defensive: e.key can be null/undefined in some browser edge cases
+        if (!e.key) return;
         const key = e.key.toLowerCase();
         const mapping = keyLookup[key];
         if (!mapping) return;
@@ -141,6 +151,8 @@ const Controls = (() => {
     }
 
     function handleKeyUp(e) {
+        // Defensive: e.key can be null/undefined in some browser edge cases
+        if (!e.key) return;
         const key = e.key.toLowerCase();
         const mapping = keyLookup[key];
         if (!mapping) return;
