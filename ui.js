@@ -34,6 +34,7 @@ const UI = (() => {
     const EDGE_MARGIN = 10;
 
     function repositionPlayersToEdge() {
+        if (!positions.length) return;
         const W = window.innerWidth;
         const H = window.innerHeight;
         positions.forEach((pos, i) => {
@@ -448,6 +449,11 @@ const UI = (() => {
 
     function updateTable(state, ackInfo = null) {
         if (!state) return;
+        // Ensure positions is always populated before any player update runs.
+        // Guards against updateTable being called before showTable (e.g. from a save/load path).
+        if (positions.length === 0) {
+            positions = getPositionsForCount(state.players.length);
+        }
 
         // Detect round-end moment: when phase transitions away from a betting round,
         // bets have just been swept into the pot. Animate chips flying to the pot
