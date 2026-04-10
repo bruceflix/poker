@@ -537,8 +537,8 @@ html, body {
 .player-section {
     position: absolute;
     width: fit-content;
-    min-width: 190px;
-    padding: 5px 8px;
+    min-width: 320px;
+    padding: 10px 14px;
     border-radius: 12px;
     background: rgba(0,0,0,0.45);
     border: 2px solid rgba(255,255,255,0.1);
@@ -577,7 +577,7 @@ html, body {
 }
 
 .player-name {
-    font-size: 0.9rem;
+    font-size: 1.2rem;
     font-weight: bold;
     color: #fff;
     text-shadow: 0 1px 3px rgba(0,0,0,0.5);
@@ -592,41 +592,23 @@ html, body {
     flex-shrink: 0;
 }
 
-/* Main content row: cards on left, chips on right */
+/* Main content row: cards on left, chip stacks on right */
 .player-main-row {
     display: flex;
     flex-direction: row;
-    gap: 8px;
+    gap: 16px;
     align-items: flex-start;
-    margin-bottom: 3px;
+    margin-bottom: 4px;
 }
 
 .player-right-col {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-end;
     gap: 4px;
     flex: 1;
-    min-width: 74px;
 }
-
-/* Chips in the right column: 2-wide grid so 3 denoms ≈ card height */
-.player-right-col .chip-stack {
-    display: grid;
-    grid-template-columns: repeat(2, 34px);
-    gap: 3px;
-    justify-items: center;
-    margin-bottom: 0;
-}
-
-.player-right-col .chip {
-    width: 34px;
-    height: 34px;
-}
-
-.player-right-col .chip-label { font-size: 0.48rem; }
-.player-right-col .chip-count { font-size: 0.52rem; }
 
 .badge {
     display: inline-block;
@@ -659,61 +641,85 @@ html, body {
     flex-shrink: 0;
 }
 
-/* Player hole cards — tall to fill the main row */
+/* Player hole cards — 2× the base card size */
 .player-cards .card {
-    width: 52px;
-    height: 76px;
+    width: 104px;
+    height: 152px;
 }
 
-.player-cards .card-rank { font-size: 1.15rem; }
-.player-cards .card-suit  { font-size: 1.05rem; }
+.player-cards .card-rank { font-size: 2.3rem; }
+.player-cards .card-suit  { font-size: 2.1rem; }
 
 .player-chips {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 2px;
+    gap: 4px;
     width: 100%;
 }
 
-.chip-stack {
+/* 3D chip stacks — denominations side by side, each growing upward */
+.chip-stacks-row {
     display: flex;
+    flex-direction: row;
+    align-items: flex-end;
+    gap: 8px;
     flex-wrap: wrap;
-    gap: 4px;
     justify-content: center;
-    margin-bottom: 3px;
 }
 
-.chip {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    border: 3px solid;
+.chip-3d-stack {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+}
+
+/* One chip disc viewed from the side */
+.chip-slice {
+    width: 52px;
+    height: 12px;
+    border-radius: 4px 4px 2px 2px;
+    border-top: 5px solid transparent;  /* lighter edge — color set inline */
+    border-bottom: 2px solid rgba(0,0,0,0.4);
     position: relative;
-    /* Dashed ring inset to mimic casino chip */
-    box-shadow: inset 0 0 0 3px rgba(255,255,255,0.18), inset 0 0 0 5px transparent, 0 2px 6px rgba(0,0,0,0.5);
 }
 
-.chip-label {
-    font-size: 0.55rem;
-    font-weight: 900;
-    line-height: 1;
-    letter-spacing: 0;
+/* Stripe inlays on the chip edge */
+.chip-slice::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: repeating-linear-gradient(
+        to right,
+        transparent 0,        transparent 26%,
+        rgba(255,255,255,0.22) 26%, rgba(255,255,255,0.22) 36%,
+        transparent 36%,      transparent 64%,
+        rgba(255,255,255,0.22) 64%, rgba(255,255,255,0.22) 74%,
+        transparent 74%
+    );
+    pointer-events: none;
 }
 
-.chip-count {
-    font-size: 0.6rem;
-    font-weight: 700;
-    line-height: 1;
+/* Topmost chip gets a shadow so it "floats" above the rest */
+.chip-slice-top {
+    box-shadow: 0 -4px 10px rgba(0,0,0,0.55);
+}
+
+.chip-stack-label {
+    margin-top: 5px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: #fff;
+    border-radius: 4px;
+    padding: 2px 6px;
+    text-align: center;
+    white-space: nowrap;
     opacity: 0.9;
 }
 
 .chips-total {
-    font-size: 0.82rem;
+    font-size: 1.1rem;
     color: #aed581;
     font-weight: bold;
 }
@@ -973,39 +979,36 @@ html, body {
 
 /* ====== RESPONSIVE ====== */
 @media (max-width: 1200px) {
-    .player-section { min-width: 165px; padding: 4px 6px; }
-    .player-cards .card { width: 42px; height: 60px; }
-    .player-cards .card-rank { font-size: 0.95rem; }
-    .player-cards .card-suit  { font-size: 0.88rem; }
+    .player-section { min-width: 240px; padding: 7px 10px; }
+    .player-cards .card { width: 80px; height: 116px; }
+    .player-cards .card-rank { font-size: 1.8rem; }
+    .player-cards .card-suit  { font-size: 1.6rem; }
     #community-cards .card { width: 120px; height: 168px; border-radius: 10px; }
     #community-cards .card-rank { font-size: 2.8rem; }
     #community-cards .card-suit { font-size: 2.5rem; }
     .pot-total { font-size: 1.4rem; }
-    .player-right-col .chip { width: 28px; height: 28px; }
-    .player-right-col .chip-stack { grid-template-columns: repeat(2, 28px); }
-    .player-right-col .chip-label { font-size: 0.42rem; }
-    .player-right-col .chip-count { font-size: 0.45rem; }
+    .chip-slice { width: 42px; height: 10px; border-top-width: 4px; }
+    .chip-stack-label { font-size: 0.62rem; }
+    .chips-total { font-size: 0.9rem; }
 }
 
 @media (min-width: 2000px) {
-    /* 4K / 2K — edge-hugging is handled by JS; scale content up */
-    .player-section { min-width: 250px; padding: 8px 12px; }
-    .player-cards .card { width: 66px; height: 94px; }
-    .player-cards .card-rank { font-size: 1.5rem; }
-    .player-cards .card-suit  { font-size: 1.35rem; }
+    /* 4K / 2K — edge-hugging handled by JS; scale content up */
+    .player-section { min-width: 420px; padding: 14px 18px; }
+    .player-cards .card { width: 130px; height: 190px; }
+    .player-cards .card-rank { font-size: 3rem; }
+    .player-cards .card-suit  { font-size: 2.7rem; }
     #community-cards .card { width: 220px; height: 308px; border-radius: 16px; }
     #community-cards .card-rank { font-size: 5.5rem; }
     #community-cards .card-suit { font-size: 5rem; }
-    .player-name { font-size: 1.15rem; }
+    .player-name { font-size: 1.5rem; }
     .pot-total { font-size: 2.4rem; }
     #blind-info { font-size: 1.4rem; }
-    .key-label { font-size: 0.82rem; }
-    .key-label kbd { font-size: 0.82rem; }
-    .player-right-col .chip { width: 44px; height: 44px; }
-    .player-right-col .chip-stack { grid-template-columns: repeat(2, 44px); }
-    .player-right-col .chip-label { font-size: 0.62rem; }
-    .player-right-col .chip-count { font-size: 0.68rem; }
-    .chips-total { font-size: 1rem; }
+    .key-label { font-size: 0.95rem; }
+    .key-label kbd { font-size: 0.95rem; }
+    .chip-slice { width: 65px; height: 15px; border-top-width: 6px; }
+    .chip-stack-label { font-size: 0.9rem; padding: 3px 8px; }
+    .chips-total { font-size: 1.3rem; }
     .hh-row-cards .card { width: 42px; height: 58px; }
 }
 

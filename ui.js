@@ -78,12 +78,23 @@ const UI = (() => {
             if (count > 0) { stacks.push({ ...d, count }); remaining -= count * d.v; }
         }
         if (stacks.length === 0) return '';
-        return stacks.map(s =>
-            `<div class="chip" style="background:${s.bg};border-color:${s.bd};color:${s.fg}">
-                <span class="chip-label">${s.label}</span>
-                <span class="chip-count">×${s.count}</span>
-            </div>`
-        ).join('');
+
+        return `<div class="chip-stacks-row">${stacks.map(s => {
+            const vis = Math.min(s.count, 10);
+            // idx 0 = top chip; gets highest z-index so it visually sits on top
+            const slices = Array.from({ length: vis }, (_, idx) => {
+                const isTop = idx === 0;
+                const mt = isTop ? '' : 'margin-top:-4px;';
+                return `<div class="chip-slice${isTop ? ' chip-slice-top' : ''}" style="${mt}z-index:${vis - idx};background:${s.bg};border-top-color:${s.bd}"></div>`;
+            }).join('');
+            const lbl = s.count > 10
+                ? `${s.count}&times;&thinsp;${s.label}`
+                : `${s.count > 1 ? s.count + '&times;&thinsp;' : ''}${s.label}`;
+            return `<div class="chip-3d-stack">
+                ${slices}
+                <div class="chip-stack-label" style="background:${s.bg};color:${s.fg}">${lbl}</div>
+            </div>`;
+        }).join('')}</div>`;
     }
 
     const BG_PRESETS = [
@@ -593,7 +604,7 @@ const UI = (() => {
             if (p.eliminated) {
                 chipsEl.innerHTML = '';
             } else {
-                chipsEl.innerHTML = `<div class="chip-stack">${renderChips(p.chips)}</div><div class="chips-total">${p.chips.toLocaleString()}</div>`;
+                chipsEl.innerHTML = `${renderChips(p.chips)}<div class="chips-total">${p.chips.toLocaleString()}</div>`;
             }
         }
 
