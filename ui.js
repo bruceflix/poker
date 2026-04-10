@@ -143,6 +143,7 @@ const UI = (() => {
                 <div class="suit-row">&#9824; &#9829; &#9827; &#9830;</div>
                 <h1>Texas Hold'em</h1>
                 <p>Tournament Setup</p>
+                <p class="config-version">${typeof VERSION !== 'undefined' ? VERSION : ''}</p>
             </div>
 
             ${savesSection}
