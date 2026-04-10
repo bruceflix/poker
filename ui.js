@@ -402,6 +402,7 @@ const UI = (() => {
 
     function buildPlayerHTML(p, i) {
         return `
+            <div class="player-bet-label" id="bet-${i}"></div>
             <div class="your-turn-indicator hidden" id="turn-${i}">&#9658; YOUR TURN</div>
             <div class="player-header">
                 <div class="player-name">${escHtml(p.name)}</div>
@@ -411,7 +412,6 @@ const UI = (() => {
                 <div class="player-cards" id="cards-${i}"></div>
                 <div class="player-right-col">
                     <div class="player-chips" id="chips-${i}"></div>
-                    <div class="player-bet" id="bet-${i}"></div>
                 </div>
             </div>
             <div class="player-keys" id="keys-${i}"></div>
@@ -448,7 +448,10 @@ const UI = (() => {
             lastRenderedPhase = state.phase;
             state.players.forEach((_, i) => {
                 const betEl = document.getElementById(`bet-${i}`);
-                if (betEl) { betEl.textContent = ''; betEl.className = 'player-bet'; }
+                if (betEl) betEl.textContent = '';
+                // Also ensure any stale sizing display is cleared on phase change
+                const sizingEl = document.getElementById(`sizing-${i}`);
+                if (sizingEl) sizingEl.classList.add('hidden');
             });
         }
 
@@ -593,13 +596,12 @@ const UI = (() => {
             }
         }
 
-        // Bet — only show during active betting phases
+        // Bet label — floats above the box toward table centre; large text for all to see
         const betEl = document.getElementById(`bet-${i}`);
         if (betEl) {
             const activeBettingPhase = ['preflop', 'flop', 'turn', 'river'].includes(state.phase);
             const showBet = activeBettingPhase && p.bet > 0;
-            betEl.textContent = showBet ? `Bet: ${p.bet.toLocaleString()}` : '';
-            betEl.className = 'player-bet' + (showBet ? ' has-bet' : '');
+            betEl.textContent = showBet ? p.bet.toLocaleString() : '';
         }
 
         // Keys

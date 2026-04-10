@@ -711,17 +711,28 @@ html, body {
     font-weight: bold;
 }
 
-.player-bet {
-    font-size: 0.8rem;
+/* Bet label: floats above the player box in local coordinate space.
+   Because each section is rotated, "local top" always faces the table centre,
+   so this label is naturally readable by all players at the table. */
+.player-bet-label {
+    position: absolute;
+    top: -46px;
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    font-size: 1.7rem;
+    font-weight: 900;
     color: #ffd700;
-    min-height: 18px;
-}
-
-.player-bet.has-bet {
-    background: rgba(255,215,0,0.15);
+    text-shadow: 0 2px 10px rgba(0,0,0,0.95), 0 0 28px rgba(255,215,0,0.45);
+    letter-spacing: 1px;
+    pointer-events: none;
+    z-index: 25;
+    /* Subtle pill background for readability against any table colour */
+    background: rgba(0,0,0,0.55);
     border-radius: 8px;
-    padding: 2px 8px;
-    display: inline-block;
+    padding: 2px 10px;
+    /* Hide when empty so it takes no space */
+    min-height: 0;
 }
 
 .player-keys {
