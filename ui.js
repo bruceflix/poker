@@ -1122,9 +1122,51 @@ const UI = (() => {
         dealOne();
     }
 
+    // ---- CHIP PUSH ANIMATION ----
+    // Called after Game.confirmBet() — animates a chip stack flying from the
+    // player's chip pile (fromRect captured before the state update) to the
+    // bet label above the player box.
+    function animateChipPush(playerIdx, amount, fromRect) {
+        const betEl = document.getElementById(`bet-${playerIdx}`);
+        if (!betEl || !fromRect || amount <= 0) return;
+
+        const toRect = betEl.getBoundingClientRect();
+        const fromX = fromRect.left + fromRect.width  / 2;
+        const fromY = fromRect.top  + fromRect.height / 2;
+        const toX   = toRect.left   + toRect.width    / 2;
+        const toY   = toRect.top    + toRect.height   / 2;
+
+        const fly = document.createElement('div');
+        fly.className = 'flying-chip-push';
+        fly.innerHTML = renderChips(amount);
+
+        // Append off-screen first to measure dimensions, then reposition
+        fly.style.left = '-9999px';
+        fly.style.top  = '-9999px';
+        document.body.appendChild(fly);
+
+        const fw = fly.offsetWidth;
+        const fh = fly.offsetHeight;
+
+        fly.style.left = `${fromX - fw / 2}px`;
+        fly.style.top  = `${fromY - fh / 2}px`;
+
+        const dx = toX - fromX;
+        const dy = toY - fromY;
+
+        requestAnimationFrame(() => {
+            fly.classList.add('flying-chip-push--go');
+            fly.style.transform = `translate(${dx}px, ${dy}px)`;
+            setTimeout(() => {
+                Audio.chipPush();
+                fly.remove();
+            }, 340);
+        });
+    }
+
     return {
         showConfig, showTable, updateTable, showBlindAlert, showGameOver,
         applyBg, setCurrentBgIndex, getCurrentBgIndex, BG_PRESETS,
-        toggleHandHistory, animateDeal
+        toggleHandHistory, animateDeal, animateChipPush
     };
 })();

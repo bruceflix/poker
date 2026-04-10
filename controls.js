@@ -91,6 +91,7 @@ const Controls = (() => {
             switch (keyIndex) {
                 case 1: // Decrease
                     Game.adjustBet(-1);
+                    Audio.chipAdjust();
                     if (onAction) onAction(player, 'adjustBet', -1);
                     break;
                 case 2: // Cancel
@@ -99,10 +100,15 @@ const Controls = (() => {
                     break;
                 case 3: // Increase
                     Game.adjustBet(1);
+                    Audio.chipAdjust();
                     if (onAction) onAction(player, 'adjustBet', 1);
                     break;
                 case 4: // Confirm
+                    const betAmount = Game.getState().betSizingAmount;
+                    const chipEl = document.getElementById(`chips-${player}`);
+                    const chipRect = chipEl ? chipEl.getBoundingClientRect() : null;
                     Game.confirmBet();
+                    if (chipRect) UI.animateChipPush(player, betAmount, chipRect);
                     if (onAction) onAction(player, 'confirmBet', null);
                     break;
             }

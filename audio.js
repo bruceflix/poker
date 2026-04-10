@@ -83,6 +83,14 @@ const Audio = (() => {
             play(rnd('chipLay1','chipLay2','chipLay3'), 0.75);
         },
 
+        chipAdjust() {
+            play(rnd('chipLay1','chipLay2','chipLay3'), 0.35);
+        },
+
+        chipPush() {
+            play('collide', 0.55);
+        },
+
         fold() {
             play(rnd('shove1','shove2'), 0.7);
         },
