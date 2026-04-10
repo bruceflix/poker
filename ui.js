@@ -421,7 +421,7 @@ const UI = (() => {
         `;
     }
 
-    function updateTable(state) {
+    function updateTable(state, ackInfo = null) {
         if (!state) return;
 
         updateCommunityCards(state);
@@ -457,15 +457,15 @@ const UI = (() => {
         }
 
         state.players.forEach((p, i) => {
-            updatePlayer(state, p, i);
+            updatePlayer(state, p, i, ackInfo);
         });
 
+        // Record last hand result (for the pill display), but don't show central overlay
         if ((state.phase === 'showdown' || state.phase === 'handOver') && state.showdownResults) {
-            showWinnerOverlay(state);
-        } else {
-            const overlayEl = document.getElementById('winner-overlay');
-            if (overlayEl) overlayEl.classList.add('hidden');
+            recordHandResult(state);
         }
+        const overlayEl = document.getElementById('winner-overlay');
+        if (overlayEl) overlayEl.classList.add('hidden');
         const sd = document.getElementById('showdown-info');
         if (sd && state.phase !== 'gameOver') sd.classList.add('hidden');
         updateLastHandDisplay(state);
@@ -520,7 +520,7 @@ const UI = (() => {
         el.className = state.blindTimeRemaining <= 30 ? 'timer-warning' : '';
     }
 
-    function updatePlayer(state, p, i) {
+    function updatePlayer(state, p, i, ackInfo = null) {
         const section = document.getElementById(`player-${i}`);
         if (!section) return;
 
@@ -597,26 +597,60 @@ const UI = (() => {
             }
         }
 
-        // Bet label — floats above the box toward table centre; large text for all to see
+        // Bet label — floats above the box; during showdown/handOver shows hand result instead
         const betEl = document.getElementById(`bet-${i}`);
         if (betEl) {
-            const activeBettingPhase = ['preflop', 'flop', 'turn', 'river'].includes(state.phase);
-            const showBet = activeBettingPhase && p.bet > 0;
-            betEl.textContent = showBet ? p.bet.toLocaleString() : '';
+            const inFinish = state.phase === 'showdown' || state.phase === 'handOver';
+            if (inFinish && state.showdownResults && !p.eliminated) {
+                let isWinner = false, winnerHand = null, loserHand = null;
+                for (const r of state.showdownResults) {
+                    const w = r.winners.find(w => w.seatIndex === i);
+                    if (w) { isWinner = true; winnerHand = w.hand; break; }
+                }
+                if (!isWinner && state.phase === 'showdown') {
+                    for (const r of state.showdownResults) {
+                        const h = r.allHands && r.allHands.find(h => h.seatIndex === i);
+                        if (h && !p.folded) { loserHand = h.hand; break; }
+                    }
+                }
+                if (isWinner) {
+                    betEl.textContent = winnerHand ? `\u2605 ${winnerHand.handName}` : '\u2605 WINS POT';
+                    betEl.className = 'player-bet-label player-result-winner';
+                } else if (loserHand) {
+                    betEl.textContent = loserHand.handName;
+                    betEl.className = 'player-bet-label player-result-loser';
+                } else {
+                    betEl.textContent = '';
+                    betEl.className = 'player-bet-label';
+                }
+            } else {
+                const activeBettingPhase = ['preflop', 'flop', 'turn', 'river'].includes(state.phase);
+                const showBet = activeBettingPhase && p.bet > 0;
+                betEl.textContent = showBet ? p.bet.toLocaleString() : '';
+                betEl.className = 'player-bet-label';
+            }
         }
 
         // Keys
         const keysEl = document.getElementById(`keys-${i}`);
         if (keysEl) {
+            const inFinish = state.phase === 'showdown' || state.phase === 'handOver';
             if (p.eliminated) {
                 keysEl.innerHTML = '';
+            } else if (inFinish) {
+                if (ackInfo && ackInfo.playersToAck.includes(i)) {
+                    const hasAcked = ackInfo.ackedPlayers.has(i);
+                    keysEl.innerHTML = hasAcked
+                        ? '<span class="ack-waiting">Waiting for others\u2026</span>'
+                        : '<span class="ack-prompt">Press any key to continue</span>';
+                }
             } else if (isActive) {
                 const labels = Controls.getKeyLabels(i);
                 const keys = Controls.getKeyMap(i);
                 keysEl.innerHTML = labels.map((label, k) =>
                     `<span class="key-label"><kbd>${keys[k].toUpperCase()}</kbd> ${label}</span>`
                 ).join('');
-            } else if (!p.eliminated) {
+            } else {
                 const keys = Controls.getKeyMap(i);
                 keysEl.innerHTML = `<span class="key-label peek-only"><kbd>${keys[0].toUpperCase()}</kbd> PEEK &nbsp; <kbd>${keys[1].toUpperCase()}</kbd> HISTORY</span>`;
             }
@@ -826,63 +860,17 @@ const UI = (() => {
         });
     }
 
-    function showWinnerOverlay(state) {
-        // Don't recreate if already shown for this hand
+    function recordHandResult(state) {
+        // Only process once per hand
         if (state.handNumber === overlayShownForHand) return;
         overlayShownForHand = state.handNumber;
 
-        const overlay = document.getElementById('winner-overlay');
-        if (!overlay || !state.showdownResults) return;
-
+        if (!state.showdownResults) return;
         const result = state.showdownResults[0];
         if (!result) return;
 
-        // Save for last-hand display
+        // Save for last-hand display pill
         lastHandResult = result;
-
-        const isShowdown = state.phase === 'showdown';
-        const winnerNames = result.winners.map(w => w.name).join(' & ');
-        const hand = result.winners[0].hand;
-
-        // Best 5 winning cards
-        let bestCardsHtml = '';
-        if (hand && hand.cards && hand.cards.length > 0) {
-            bestCardsHtml = `<div class="winner-best-cards">
-                ${hand.cards.map(c => renderCard(c, true)).join('')}
-            </div>`;
-        }
-
-        // Losing hands (showdown only)
-        let othersHtml = '';
-        if (isShowdown && result.allHands && result.allHands.length > 1) {
-            const losers = result.allHands.filter(h =>
-                !result.winners.some(w => w.seatIndex === h.seatIndex)
-            );
-            if (losers.length > 0) {
-                othersHtml = `<div class="winner-others">
-                    ${losers.map(h =>
-                        `<div class="winner-others-entry">${escHtml(h.name)}: ${escHtml(h.hand.description)}</div>`
-                    ).join('')}
-                </div>`;
-            }
-        }
-
-        const trophy     = isShowdown ? '&#127942;' : '&#128176;';
-        const winsText   = `wins ${result.pot.toLocaleString()} chips${!isShowdown ? ' (uncontested)' : ''}`;
-        const handName   = hand ? hand.handName : '';
-        const handDetail = hand && hand.description !== handName ? hand.description : '';
-
-        overlay.innerHTML = `<div class="winner-banner">
-            <div class="winner-trophy">${trophy}</div>
-            <div class="winner-name-big">${escHtml(winnerNames)}</div>
-            <div class="winner-wins-amount">${winsText}</div>
-            ${handName   ? `<div class="winner-hand-type">${escHtml(handName)}</div>`     : ''}
-            ${handDetail ? `<div class="winner-hand-detail">${escHtml(handDetail)}</div>` : ''}
-            ${bestCardsHtml}
-            ${othersHtml}
-        </div>`;
-
-        overlay.classList.remove('hidden');
     }
 
     function updateLastHandDisplay(state) {

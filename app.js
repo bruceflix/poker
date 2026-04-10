@@ -2,8 +2,17 @@
 
 const App = (() => {
     let handInProgress = false;
-    let autoAdvanceTimer = null;
     let lastBlindLevel = 0;
+
+    // Acknowledgment tracking — all non-eliminated players must press a key
+    // after each hand before the next deal begins.
+    let ackedPlayers   = new Set();
+    let ackedHandNumber = -1;
+    let playersToAck   = [];
+
+    function getAckInfo() {
+        return playersToAck.length ? { ackedPlayers, playersToAck } : null;
+    }
 
     function start() {
         UI.showConfig(startGame);
@@ -61,9 +70,12 @@ const App = (() => {
 
     function dealNextHand() {
         handInProgress = true;
+        ackedPlayers    = new Set();
+        ackedHandNumber = -1;
+        playersToAck    = [];
         Game.startHand();
         Audio.cardDeal();
-        UI.updateTable(Game.getState());
+        UI.updateTable(Game.getState(), null);
     }
 
     function togglePause(forceTo) {
@@ -74,44 +86,27 @@ const App = (() => {
         } else {
             state.paused = !state.paused;
         }
-        UI.updateTable(state);
+        UI.updateTable(state, getAckInfo());
     }
 
     function onStateUpdate(state) {
-        UI.updateTable(state);
+        // When first entering showdown/handOver, record which players must acknowledge
+        if ((state.phase === 'showdown' || state.phase === 'handOver') &&
+            ackedHandNumber !== state.handNumber) {
+            ackedHandNumber = state.handNumber;
+            ackedPlayers    = new Set();
+            playersToAck    = state.players
+                .map((p, i) => ({ p, i }))
+                .filter(({ p }) => !p.eliminated)
+                .map(({ i }) => i);
+        }
 
         if (state.blindLevel !== lastBlindLevel) {
             lastBlindLevel = state.blindLevel;
             UI.showBlindAlert(Game.smallBlind(), Game.bigBlind());
         }
 
-        if (state.phase === 'showdown' || state.phase === 'handOver') {
-            // Only start the timer once — don't reset it on every blind-timer tick
-            if (!autoAdvanceTimer) {
-                const delay = state.phase === 'showdown' ? 4000 : 2500;
-                autoAdvanceTimer = setTimeout(() => {
-                    autoAdvanceTimer = null;
-
-                    // Don't advance while paused — re-fetch live state
-                    const currentState = Game.getState();
-                    if (currentState && currentState.paused) {
-                        waitForUnpause(() => finishAndAdvance());
-                        return;
-                    }
-                    finishAndAdvance();
-                }, delay);
-            }
-        }
-    }
-
-    function waitForUnpause(cb) {
-        const check = setInterval(() => {
-            const state = Game.getState();
-            if (state && !state.paused) {
-                clearInterval(check);
-                cb();
-            }
-        }, 200);
+        UI.updateTable(state, getAckInfo());
     }
 
     function finishAndAdvance() {
@@ -134,7 +129,22 @@ const App = (() => {
             UI.toggleHandHistory(playerIndex, Game.getState());
             return;
         }
-        UI.updateTable(Game.getState());
+
+        if (action === 'ack') {
+            const state = Game.getState();
+            if (!state) return;
+            if (state.phase !== 'showdown' && state.phase !== 'handOver') return;
+            ackedPlayers.add(playerIndex);
+            const allAcked = playersToAck.every(i => ackedPlayers.has(i));
+            UI.updateTable(state, getAckInfo());
+            if (allAcked) {
+                // Brief pause so the "all ready" state is visible before dealing
+                setTimeout(() => finishAndAdvance(), 500);
+            }
+            return;
+        }
+
+        UI.updateTable(Game.getState(), getAckInfo());
     }
 
     return { start, togglePause };

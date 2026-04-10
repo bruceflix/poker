@@ -63,6 +63,12 @@ const Controls = (() => {
         const p = state.players[player];
         if (!p || p.eliminated) return;
 
+        // During showdown/handOver: any key from a non-eliminated player = acknowledge
+        if (state.phase === 'showdown' || state.phase === 'handOver') {
+            if (onAction) onAction(player, 'ack', null);
+            return;
+        }
+
         // Key 0 = Peek — always works (hold)
         if (keyIndex === 0) {
             peekingPlayers.add(player);
