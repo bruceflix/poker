@@ -75,7 +75,7 @@ const App = (() => {
         playersToAck    = [];
         Game.startHand();
         Audio.cardDeal();
-        UI.updateTable(Game.getState(), null);
+        UI.animateDeal(Game.getState());
     }
 
     function togglePause(forceTo) {

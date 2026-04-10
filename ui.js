@@ -60,6 +60,15 @@ const UI = (() => {
     let overlayShownForHand = -1;
     let lastRenderedPhase = null;
 
+    // --- Deal animation state ---
+    // dealAnim: { handNumber, dealtTo: { playerIdx: cardCount } } | null
+    let dealAnim = null;
+
+    // --- Community card flip animation state ---
+    let commRevealedCount  = 0;    // how many community cards are fully face-up
+    let commAnimating      = false; // flip sequence in progress — skip re-entry
+    let commHandNumber     = -1;   // reset tracking when a new hand starts
+
     // Casino chip colour scheme with labeled denominations
     const CHIP_DENOMS = [
         { v: 1000, bg: '#B71C1C', bd: '#FF5252', fg: '#fff', label: '1K'  },
@@ -485,9 +494,91 @@ const UI = (() => {
     function updateCommunityCards(state) {
         const el = document.getElementById('community-cards');
         if (!el) return;
-        el.innerHTML = state.communityCards.map(c => renderCard(c, true)).join('');
+
+        // Reset counters at the start of each new hand
+        if (state.handNumber !== commHandNumber) {
+            commHandNumber    = state.handNumber;
+            commRevealedCount = 0;
+            commAnimating     = false;
+        }
+
+        const total = state.communityCards.length;
+
+        // Nothing new / animation already running — just render what's revealed so far
+        if (total <= commRevealedCount || commAnimating) {
+            renderCommunityStatic(el, state, commRevealedCount);
+            return;
+        }
+
+        // New cards appeared — start a flip sequence
+        const newCount   = total - commRevealedCount;
+        // Runout: multiple new cards AND phase is already showdown (board ran out all at once)
+        const isRunout   = newCount >= 2 && state.phase === 'showdown';
+        const gapMs      = isRunout ? 1000 : 500; // ms between successive flips
+        const initialMs  = isRunout ? 800  : 0;   // pause before very first card
+
+        commAnimating = true;
+
+        // Render: already-revealed face-up + new ones as backs + empty slots
+        renderCommunityStatic(el, state, commRevealedCount);
+
+        let seq = 0;
+        function flipNext() {
+            if (seq >= newCount) { commAnimating = false; return; }
+
+            const cardIdx = commRevealedCount + seq;
+            const delay   = seq === 0 ? initialMs : gapMs;
+
+            setTimeout(() => {
+                const cardEls = el.querySelectorAll('.card');
+                const target  = cardEls[cardIdx];
+                if (!target) { commRevealedCount++; seq++; flipNext(); return; }
+
+                // Phase 1: rotate face-down card 90° (hiding it)
+                target.style.transition = 'transform 0.15s ease-in';
+                target.style.transform  = 'rotateY(90deg)';
+
+                setTimeout(() => {
+                    // Phase 2: swap in face-up card, animate in from 90° → 0°
+                    const faceHtml = renderCard(state.communityCards[cardIdx], true);
+                    const tmp = document.createElement('div');
+                    tmp.innerHTML = faceHtml;
+                    const faceEl = tmp.firstElementChild;
+                    faceEl.style.transform  = 'rotateY(-90deg)';
+                    faceEl.style.transition = 'none';
+                    target.replaceWith(faceEl);
+
+                    requestAnimationFrame(() => {
+                        faceEl.style.transition = 'transform 0.2s ease-out';
+                        faceEl.style.transform  = 'rotateY(0deg)';
+                    });
+
+                    Audio.cardFlip();
+                    commRevealedCount++;
+                    seq++;
+                    flipNext();
+                }, 160);
+            }, delay);
+        }
+
+        flipNext();
+    }
+
+    // Render revealed cards face-up, remaining as backs/slots (no animation)
+    function renderCommunityStatic(el, state, revealedCount) {
+        let html = '';
+        for (let i = 0; i < state.communityCards.length; i++) {
+            html += i < revealedCount
+                ? renderCard(state.communityCards[i], true)
+                : renderCard(null, false);
+        }
         for (let i = state.communityCards.length; i < 5; i++) {
-            el.innerHTML += '<div class="card card-slot"></div>';
+            html += '<div class="card card-slot"></div>';
+        }
+        // Only update DOM if content changed (avoids killing in-progress transitions)
+        if (el.dataset.staticKey !== `${revealedCount}/${state.communityCards.length}`) {
+            el.dataset.staticKey = `${revealedCount}/${state.communityCards.length}`;
+            el.innerHTML = html;
         }
     }
 
@@ -585,7 +676,11 @@ const UI = (() => {
         // Cards (or inline hand history)
         const cardsEl = document.getElementById(`cards-${i}`);
         if (cardsEl) {
-            if (historyOpenFor === i) {
+            if (dealAnim && dealAnim.handNumber === state.handNumber) {
+                // During deal animation: show only the card backs that have arrived so far
+                const arrivedCount = dealAnim.dealtTo[i] || 0;
+                cardsEl.innerHTML = Array.from({ length: arrivedCount }, () => renderCard(null, false)).join('');
+            } else if (historyOpenFor === i) {
                 cardsEl.innerHTML = buildHandHistoryInline(p, state);
             } else if (p.eliminated || p.cards.length === 0) {
                 cardsEl.innerHTML = '';
@@ -957,9 +1052,79 @@ const UI = (() => {
     function setCurrentBgIndex(idx) { currentBgIndex = idx; }
     function getCurrentBgIndex() { return currentBgIndex; }
 
+    // ---- DEAL ANIMATION ----
+    function animateDeal(state) {
+        const active = state.players.filter(p => !p.eliminated);
+        if (!active.length) return;
+
+        // Initialise per-player dealt counts
+        dealAnim = { handNumber: state.handNumber, dealtTo: {} };
+        active.forEach(p => { dealAnim.dealtTo[p.seatIndex] = 0; });
+
+        // Build deal sequence: twice around table in seat order
+        const seq = [];
+        for (let round = 0; round < 2; round++) {
+            for (const p of active) seq.push(p.seatIndex);
+        }
+
+        // Show table with 0 cards so the deal animation builds them up
+        updateTable(state, null);
+
+        const CX = window.innerWidth  / 2;
+        const CY = window.innerHeight / 2;
+        const CW = 52, CH = 76; // flying card dimensions
+
+        let idx = 0;
+        function dealOne() {
+            if (!dealAnim) return; // cancelled (e.g. game reset)
+            if (idx >= seq.length) {
+                dealAnim = null;
+                updateTable(Game.getState(), null);
+                return;
+            }
+
+            const pi      = seq[idx];
+            const section = document.getElementById(`player-${pi}`);
+            if (!section) { idx++; dealOne(); return; }
+
+            const rect  = section.getBoundingClientRect();
+            const destX = rect.left + rect.width  / 2 - CW / 2;
+            const destY = rect.top  + rect.height / 2 - CH / 2;
+
+            // Create a flying card-back element at table centre
+            const fly = document.createElement('div');
+            fly.className = 'flying-deal-card';
+            fly.innerHTML = '<div class="card-back-inner"></div><div class="card-back-pattern"></div>';
+            fly.style.left = `${CX - CW / 2}px`;
+            fly.style.top  = `${CY - CH / 2}px`;
+            document.body.appendChild(fly);
+
+            requestAnimationFrame(() => {
+                fly.classList.add('flying-deal-card--go');
+                fly.style.transform = `translate(${destX - (CX - CW/2)}px, ${destY - (CY - CH/2)}px)`;
+
+                setTimeout(() => {
+                    fly.remove();
+                    dealAnim.dealtTo[pi] = (dealAnim.dealtTo[pi] || 0) + 1;
+                    // Update just that player's card area
+                    const cardsEl = document.getElementById(`cards-${pi}`);
+                    if (cardsEl) {
+                        const count = dealAnim.dealtTo[pi];
+                        cardsEl.innerHTML = Array.from({ length: count }, () => renderCard(null, false)).join('');
+                    }
+                    Audio.cardFlip();
+                    idx++;
+                    setTimeout(dealOne, 60); // 60ms gap between successive cards
+                }, 260);
+            });
+        }
+
+        dealOne();
+    }
+
     return {
         showConfig, showTable, updateTable, showBlindAlert, showGameOver,
         applyBg, setCurrentBgIndex, getCurrentBgIndex, BG_PRESETS,
-        toggleHandHistory
+        toggleHandHistory, animateDeal
     };
 })();

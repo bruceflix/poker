@@ -1140,6 +1140,22 @@ html, body {
     display: none;
 }
 
+/* ====== DEAL ANIMATION ====== */
+.flying-deal-card {
+    position: fixed;
+    width: 52px;
+    height: 76px;
+    z-index: 400;
+    pointer-events: none;
+    border-radius: 6px;
+    background: #0D47A1;
+    border: 2px solid rgba(255,255,255,0.4);
+    overflow: hidden;
+}
+.flying-deal-card--go {
+    transition: transform 0.26s ease-out;
+}
+
 /* ====== SETTINGS OVERLAY ====== */
 .overlay {
     position: fixed;
