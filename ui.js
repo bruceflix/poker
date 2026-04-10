@@ -434,12 +434,8 @@ const UI = (() => {
                 <div class="player-name">${escHtml(p.name)}</div>
                 <div class="player-badge" id="badge-${i}"></div>
             </div>
-            <div class="player-main-row">
-                <div class="player-cards" id="cards-${i}"></div>
-                <div class="player-right-col">
-                    <div class="player-chips" id="chips-${i}"></div>
-                </div>
-            </div>
+            <div class="player-cards" id="cards-${i}"></div>
+            <div class="player-chips" id="chips-${i}"></div>
             <div class="player-keys" id="keys-${i}"></div>
             <div class="player-bet-sizing hidden" id="sizing-${i}"></div>
             <div class="player-status" id="status-${i}"></div>
@@ -502,6 +498,19 @@ const UI = (() => {
         const sd = document.getElementById('showdown-info');
         if (sd && state.phase !== 'gameOver') sd.classList.add('hidden');
         updateLastHandDisplay(state);
+        scheduleReposition();
+    }
+
+    // Schedule repositionPlayersToEdge for after the current render — de-duped so
+    // rapid updateTable calls only trigger one reposition per animation frame.
+    let _repositionPending = false;
+    function scheduleReposition() {
+        if (_repositionPending) return;
+        _repositionPending = true;
+        requestAnimationFrame(() => {
+            _repositionPending = false;
+            repositionPlayersToEdge();
+        });
     }
 
     function updateCommunityCards(state) {
@@ -617,7 +626,8 @@ const UI = (() => {
                          state.players.reduce((sum, p) => sum + p.bet, 0);
         if (totalPot === 0) { el.innerHTML = ''; return; }
 
-        let html = `<div class="pot-total">POT: ${totalPot.toLocaleString()}</div>`;
+        let html = `<div class="pot-chips">${renderChips(totalPot)}</div>`;
+        html += `<div class="pot-total">POT: ${totalPot.toLocaleString()}</div>`;
         const nonEmptyPots = state.pots.filter(p => p.amount > 0);
         if (nonEmptyPots.length > 1) {
             html += '<div class="side-pots">';

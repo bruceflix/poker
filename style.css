@@ -389,6 +389,15 @@ html, body {
     margin-bottom: 8px;
 }
 
+/* Chip stacks inside the pot display — same chips, slightly smaller */
+.pot-chips {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 4px;
+}
+.pot-chips .chip-slice       { width: 38px; height: 9px; border-top-width: 4px; }
+.pot-chips .chip-stack-label { font-size: 0.62rem; padding: 2px 4px; }
+
 .pot-total {
     font-size: 1.8rem;
     font-weight: bold;
@@ -536,14 +545,18 @@ html, body {
 
 .player-section {
     position: absolute;
-    width: fit-content;
-    min-width: 320px;
+    width: 340px;
     padding: 10px 14px;
     border-radius: 12px;
     background: rgba(0,0,0,0.45);
     border: 2px solid rgba(255,255,255,0.1);
     transition: border-color 0.3s, box-shadow 0.3s;
     z-index: 20;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    box-sizing: border-box;
 }
 
 .player-section.active-player {
@@ -573,7 +586,7 @@ html, body {
     align-items: center;
     justify-content: space-between;
     gap: 6px;
-    margin-bottom: 4px;
+    width: 100%;
 }
 
 .player-name {
@@ -592,22 +605,12 @@ html, body {
     flex-shrink: 0;
 }
 
-/* Main content row: cards on left, chip stacks on right */
-.player-main-row {
+/* Cards row — centred, then chips row below at full width */
+.player-cards {
     display: flex;
-    flex-direction: row;
-    gap: 16px;
-    align-items: flex-start;
-    margin-bottom: 4px;
-}
-
-.player-right-col {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-end;
     gap: 4px;
-    flex: 1;
+    justify-content: center;
+    flex-shrink: 0;
 }
 
 .badge {
@@ -634,12 +637,7 @@ html, body {
     color: #fff;
 }
 
-.player-cards {
-    display: flex;
-    gap: 4px;
-    align-items: flex-start;
-    flex-shrink: 0;
-}
+/* (layout rule now above, near player-section) */
 
 /* Player hole cards — 2× the base card size */
 .player-cards .card {
@@ -1044,7 +1042,7 @@ html, body {
 
 /* ====== RESPONSIVE ====== */
 @media (max-width: 1200px) {
-    .player-section { min-width: 240px; padding: 7px 10px; }
+    .player-section { width: 270px; padding: 7px 10px; }
     .player-cards .card { width: 80px; height: 116px; }
     .player-cards .card-rank       { font-size: 1.1rem; }
     .player-cards .card-suit       { font-size: 0.85rem; }
@@ -1065,7 +1063,7 @@ html, body {
 
 @media (min-width: 2000px) {
     /* 4K / 2K — edge-hugging handled by JS; scale content up */
-    .player-section { min-width: 420px; padding: 14px 18px; }
+    .player-section { width: 460px; padding: 14px 18px; }
     .player-cards .card { width: 130px; height: 190px; }
     .player-cards .card-rank       { font-size: 1.8rem; }
     .player-cards .card-suit       { font-size: 1.4rem; }
