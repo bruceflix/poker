@@ -566,7 +566,8 @@ html, body {
 .player-right-col {
     flex: 1;
     min-width: 0;
-    overflow: hidden;
+    display: flex;
+    align-items: stretch;
 }
 
 .player-section.active-player {
@@ -668,11 +669,17 @@ html, body {
     width: 100%;
 }
 
-/* Compact chips in player box — nowrap so all denominations stay in one row */
+/* Compact chips in player box — wrap to 2 lines, total pinned to bottom */
+.player-right-col .player-chips {
+    justify-content: flex-end;
+    align-items: flex-start;
+    height: 100%;
+}
+
 .player-right-col .chip-stacks-row {
-    flex-wrap: nowrap;
-    overflow: hidden;
+    flex-wrap: wrap;
     justify-content: flex-start;
+    gap: 4px 6px;
 }
 
 .player-right-col .chip-slice {
