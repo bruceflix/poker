@@ -69,6 +69,11 @@ const UI = (() => {
     let commAnimating      = false; // flip sequence in progress — skip re-entry
     let commHandNumber     = -1;   // reset tracking when a new hand starts
 
+    // --- Bet collection animation state ---
+    // Bet amounts from the most-recent render — used to animate sweeping chips
+    // from player bet labels to the pot when a betting round ends.
+    let lastRenderedBets = {}; // { playerIdx: amount }
+
     // Casino chip colour scheme with labeled denominations
     const CHIP_DENOMS = [
         { v: 1000, bg: '#B71C1C', bd: '#FF5252', fg: '#fff', label: '1K'  },
@@ -444,6 +449,14 @@ const UI = (() => {
     function updateTable(state, ackInfo = null) {
         if (!state) return;
 
+        // Detect round-end moment: when phase transitions away from a betting round,
+        // bets have just been swept into the pot. Animate chips flying to the pot
+        // BEFORE we clear the bet labels below.
+        const bettingPhases = ['preflop', 'flop', 'turn', 'river'];
+        if (state.phase !== lastRenderedPhase && bettingPhases.includes(lastRenderedPhase)) {
+            animateBetCollection(lastRenderedBets);
+        }
+
         updateCommunityCards(state);
         updatePotDisplay(state);
         updateBlindInfo(state);
@@ -749,6 +762,7 @@ const UI = (() => {
                 const showBet = activeBettingPhase && p.bet > 0;
                 betEl.textContent = showBet ? p.bet.toLocaleString() : '';
                 betEl.className = 'player-bet-label';
+                lastRenderedBets[i] = showBet ? p.bet : 0;
             }
         }
 
@@ -1138,6 +1152,50 @@ const UI = (() => {
         }
 
         dealOne();
+    }
+
+    // ---- BET COLLECTION ANIMATION ----
+    // Called when a betting round ends (phase change detected in updateTable).
+    // Animates chip stacks flying from each player's bet label to the pot display,
+    // like a dealer sweeping chips into the middle of the table.
+    function animateBetCollection(bets) {
+        const potEl = document.getElementById('pot-display');
+        if (!potEl) return;
+        const potRect = potEl.getBoundingClientRect();
+        const toX = potRect.left + potRect.width  / 2;
+        const toY = potRect.top  + potRect.height / 2;
+
+        let anyBet = false;
+        Object.entries(bets).forEach(([idxStr, amount]) => {
+            if (!amount) return;
+            anyBet = true;
+            const betEl = document.getElementById(`bet-${idxStr}`);
+            if (!betEl) return;
+            const betRect = betEl.getBoundingClientRect();
+
+            const fly = document.createElement('div');
+            fly.className = 'flying-chip-push';
+            fly.innerHTML = renderChips(amount);
+            fly.style.left = '-9999px';
+            fly.style.top  = '-9999px';
+            document.body.appendChild(fly);
+
+            const fw = fly.offsetWidth;
+            const fh = fly.offsetHeight;
+            const fromX = betRect.left + betRect.width  / 2;
+            const fromY = betRect.top  + betRect.height / 2;
+
+            fly.style.left = `${fromX - fw / 2}px`;
+            fly.style.top  = `${fromY - fh / 2}px`;
+
+            void fly.offsetWidth;
+            fly.classList.add('flying-chip-push--go');
+            fly.style.transform = `translate(${toX - fromX}px, ${toY - fromY}px)`;
+
+            setTimeout(() => fly.remove(), 380);
+        });
+
+        if (anyBet) Audio.chipPush();
     }
 
     // ---- CHIP PUSH ANIMATION ----
