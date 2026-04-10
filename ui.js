@@ -504,29 +504,35 @@ const UI = (() => {
 
         const total = state.communityCards.length;
 
-        // Nothing new / animation already running — just render what's revealed so far
-        if (total <= commRevealedCount || commAnimating) {
+        // Nothing new — just render what's revealed so far
+        if (total <= commRevealedCount) {
             renderCommunityStatic(el, state, commRevealedCount);
             return;
         }
 
-        // New cards appeared — start a flip sequence
-        const newCount   = total - commRevealedCount;
-        // Runout: multiple new cards AND phase is already showdown (board ran out all at once)
-        const isRunout   = newCount >= 2 && state.phase === 'showdown';
-        const gapMs      = isRunout ? 1000 : 500; // ms between successive flips
-        const initialMs  = isRunout ? 800  : 0;   // pause before very first card
+        // Animation already running — don't interfere (re-rendering mid-flip detaches animated elements)
+        if (commAnimating) return;
 
+        // New cards appeared — start a flip sequence
+        const newCount  = total - commRevealedCount;
+        // Runout: multiple new cards AND phase is already showdown (board ran out all at once)
+        const isRunout  = newCount >= 2 && state.phase === 'showdown';
+        const gapMs     = isRunout ? 1000 : 500; // ms between successive flips
+        const initialMs = isRunout ? 800  : 0;   // pause before very first card
+
+        // Render initial state (backs for new cards) BEFORE setting commAnimating,
+        // so the guard below won't block this first render.
+        renderCommunityStatic(el, state, commRevealedCount);
         commAnimating = true;
 
-        // Render: already-revealed face-up + new ones as backs + empty slots
-        renderCommunityStatic(el, state, commRevealedCount);
-
+        // Capture start index — commRevealedCount grows as each card flips, so we
+        // must use the value frozen at animation start when computing DOM positions.
+        const startRevealedCount = commRevealedCount;
         let seq = 0;
         function flipNext() {
             if (seq >= newCount) { commAnimating = false; return; }
 
-            const cardIdx = commRevealedCount + seq;
+            const cardIdx = startRevealedCount + seq; // fixed: was commRevealedCount+seq (grew each flip)
             const delay   = seq === 0 ? initialMs : gapMs;
 
             setTimeout(() => {
@@ -539,19 +545,28 @@ const UI = (() => {
                 target.style.transform  = 'rotateY(90deg)';
 
                 setTimeout(() => {
-                    // Phase 2: swap in face-up card, animate in from 90° → 0°
+                    // Phase 2: re-query element at same slot (DOM may have shifted),
+                    // swap in face-up card, animate in from -90° → 0°
+                    const currentEls = el.querySelectorAll('.card');
+                    const slot       = currentEls[cardIdx];
+
                     const faceHtml = renderCard(state.communityCards[cardIdx], true);
                     const tmp = document.createElement('div');
                     tmp.innerHTML = faceHtml;
                     const faceEl = tmp.firstElementChild;
                     faceEl.style.transform  = 'rotateY(-90deg)';
                     faceEl.style.transition = 'none';
-                    target.replaceWith(faceEl);
 
-                    requestAnimationFrame(() => {
-                        faceEl.style.transition = 'transform 0.2s ease-out';
-                        faceEl.style.transform  = 'rotateY(0deg)';
-                    });
+                    if (slot && slot.parentNode) {
+                        slot.replaceWith(faceEl);
+                    } else {
+                        // Fallback: element was detached (rare) — append to keep count correct
+                        el.appendChild(faceEl);
+                    }
+
+                    void faceEl.offsetWidth; // force reflow so Phase-2 transition fires
+                    faceEl.style.transition = 'transform 0.2s ease-out';
+                    faceEl.style.transform  = 'rotateY(0deg)';
 
                     Audio.cardFlip();
                     commRevealedCount++;
@@ -1099,24 +1114,27 @@ const UI = (() => {
             fly.style.top  = `${CY - CH / 2}px`;
             document.body.appendChild(fly);
 
-            requestAnimationFrame(() => {
-                fly.classList.add('flying-deal-card--go');
-                fly.style.transform = `translate(${destX - (CX - CW/2)}px, ${destY - (CY - CH/2)}px)`;
+            // Force reflow so the browser commits the initial position as the "from" state
+            // before we add the transition class. Without this, rapid card creation means
+            // the browser collapses the append + transition into one frame and skips animating.
+            void fly.offsetWidth;
+            fly.classList.add('flying-deal-card--go');
+            fly.style.transform = `translate(${destX - (CX - CW/2)}px, ${destY - (CY - CH/2)}px)`;
 
-                setTimeout(() => {
-                    fly.remove();
-                    dealAnim.dealtTo[pi] = (dealAnim.dealtTo[pi] || 0) + 1;
-                    // Update just that player's card area
-                    const cardsEl = document.getElementById(`cards-${pi}`);
-                    if (cardsEl) {
-                        const count = dealAnim.dealtTo[pi];
-                        cardsEl.innerHTML = Array.from({ length: count }, () => renderCard(null, false)).join('');
-                    }
-                    Audio.cardFlip();
-                    idx++;
-                    setTimeout(dealOne, 60); // 60ms gap between successive cards
-                }, 260);
-            });
+            setTimeout(() => {
+                fly.remove();
+                if (!dealAnim) return; // cancelled mid-animation (e.g. game reset)
+                dealAnim.dealtTo[pi] = (dealAnim.dealtTo[pi] || 0) + 1;
+                // Update just that player's card area
+                const cardsEl = document.getElementById(`cards-${pi}`);
+                if (cardsEl) {
+                    const count = dealAnim.dealtTo[pi];
+                    cardsEl.innerHTML = Array.from({ length: count }, () => renderCard(null, false)).join('');
+                }
+                Audio.cardFlip();
+                idx++;
+                setTimeout(dealOne, 60); // 60ms gap between successive cards
+            }, 280);
         }
 
         dealOne();
