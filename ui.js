@@ -434,8 +434,12 @@ const UI = (() => {
                 <div class="player-name">${escHtml(p.name)}</div>
                 <div class="player-badge" id="badge-${i}"></div>
             </div>
-            <div class="player-cards" id="cards-${i}"></div>
-            <div class="player-chips" id="chips-${i}"></div>
+            <div class="player-main-row">
+                <div class="player-cards" id="cards-${i}"></div>
+                <div class="player-right-col">
+                    <div class="player-chips" id="chips-${i}"></div>
+                </div>
+            </div>
             <div class="player-keys" id="keys-${i}"></div>
             <div class="player-bet-sizing hidden" id="sizing-${i}"></div>
             <div class="player-status" id="status-${i}"></div>

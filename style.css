@@ -545,18 +545,28 @@ html, body {
 
 .player-section {
     position: absolute;
-    width: 340px;
+    width: 420px;
     padding: 10px 14px;
     border-radius: 12px;
     background: rgba(0,0,0,0.45);
     border: 2px solid rgba(255,255,255,0.1);
     transition: border-color 0.3s, box-shadow 0.3s;
     z-index: 20;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 5px;
     box-sizing: border-box;
+}
+
+.player-main-row {
+    display: flex;
+    flex-direction: row;
+    gap: 12px;
+    align-items: flex-start;
+    margin-bottom: 4px;
+}
+
+.player-right-col {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
 }
 
 .player-section.active-player {
@@ -656,6 +666,24 @@ html, body {
     align-items: center;
     gap: 4px;
     width: 100%;
+}
+
+/* Compact chips in player box — nowrap so all denominations stay in one row */
+.player-right-col .chip-stacks-row {
+    flex-wrap: nowrap;
+    overflow: hidden;
+    justify-content: flex-start;
+}
+
+.player-right-col .chip-slice {
+    width: 36px;
+    height: 9px;
+    border-top-width: 4px;
+}
+
+.player-right-col .chip-stack-label {
+    font-size: 0.58rem;
+    padding: 1px 3px;
 }
 
 /* 3D chip stacks — denominations side by side, each growing upward */
@@ -1042,7 +1070,7 @@ html, body {
 
 /* ====== RESPONSIVE ====== */
 @media (max-width: 1200px) {
-    .player-section { width: 270px; padding: 7px 10px; }
+    .player-section { width: 320px; padding: 7px 10px; }
     .player-cards .card { width: 80px; height: 116px; }
     .player-cards .card-rank       { font-size: 1.1rem; }
     .player-cards .card-suit       { font-size: 0.85rem; }
