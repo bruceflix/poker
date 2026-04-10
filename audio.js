@@ -1,20 +1,64 @@
-// audio.js — Web Audio API sound effects for poker table
+// audio.js — Real casino sound effects (Kenney CC0, kenney.nl)
 
 const Audio = (() => {
-    let ctx = null;
     let muted = localStorage.getItem('poker_muted') === '1';
 
-    function getCtx() {
-        if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
-        return ctx;
+    // --- Preloader ---
+    const cache = {};
+
+    function load(key, file) {
+        const el = new window.Audio(`sounds/${file}`);
+        el.preload = 'auto';
+        cache[key] = el;
     }
 
-    function ensureResumed() {
-        const c = getCtx();
-        if (c.state === 'suspended') c.resume();
-        return c;
+    // Play a named sound (cloneNode so overlapping calls work)
+    function play(key, vol = 0.8) {
+        if (muted) return;
+        const src = cache[key];
+        if (!src) return;
+        const a = src.cloneNode();
+        a.volume = Math.min(1, Math.max(0, vol));
+        a.play().catch(() => {});
     }
 
+    // Pick a random key from a list
+    function rnd(...keys) { return keys[Math.floor(Math.random() * keys.length)]; }
+
+    // --- Load all sounds ---
+    // Card actions
+    load('deal',     'card-shuffle.ogg');
+    load('slide1',   'card-slide-1.ogg');
+    load('slide2',   'card-slide-3.ogg');
+    load('slide3',   'card-slide-5.ogg');
+    load('slide4',   'card-slide-7.ogg');
+    load('place1',   'card-place-1.ogg');
+    load('place2',   'card-place-2.ogg');
+    load('shove1',   'card-shove-1.ogg');
+    load('shove2',   'card-shove-2.ogg');
+    // Chip actions
+    load('chipLay1', 'chip-lay-1.ogg');
+    load('chipLay2', 'chip-lay-2.ogg');
+    load('chipLay3', 'chip-lay-3.ogg');
+    load('collide',  'chips-collide-3.ogg');
+    load('stack1',   'chips-stack-1.ogg');
+    load('stack2',   'chips-stack-3.ogg');
+    // Notifications
+    load('bong',     'bong_001.ogg');
+    load('confirm1', 'confirmation_001.ogg');
+    load('confirm2', 'confirmation_002.ogg');
+    load('error1',   'error_001.ogg');
+    load('error2',   'error_002.ogg');
+    // Jingles
+    load('winJingle',      'jingles-hit_00.ogg');
+    load('gameOverJingle', 'jingles-hit_14.ogg');
+
+    // Warm up audio on first keypress (browser autoplay policy)
+    document.addEventListener('keydown', () => {
+        Object.values(cache).forEach(a => a.load());
+    }, { once: true });
+
+    // --- Public API ---
     function toggleMute() {
         muted = !muted;
         localStorage.setItem('poker_muted', muted ? '1' : '0');
@@ -23,120 +67,54 @@ const Audio = (() => {
 
     function isMuted() { return muted; }
 
-    // Unlock audio on first keypress (browser autoplay policy)
-    document.addEventListener('keydown', () => {
-        ensureResumed();
-    }, { once: true });
-
-    // Utility: play a tone
-    function tone(freq, duration, type = 'sine', volume = 0.3, startTime = 0) {
-        const c = ensureResumed();
-        const osc = c.createOscillator();
-        const gain = c.createGain();
-        osc.type = type;
-        osc.frequency.value = freq * (0.98 + Math.random() * 0.04);
-        gain.gain.setValueAtTime(volume, c.currentTime + startTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, c.currentTime + startTime + duration);
-        osc.connect(gain);
-        gain.connect(c.destination);
-        osc.start(c.currentTime + startTime);
-        osc.stop(c.currentTime + startTime + duration);
-    }
-
-    // Noise burst helper
-    function noise(duration, volume = 0.15, startTime = 0) {
-        const c = ensureResumed();
-        const bufferSize = c.sampleRate * duration;
-        const buffer = c.createBuffer(1, bufferSize, c.sampleRate);
-        const data = buffer.getChannelData(0);
-        for (let i = 0; i < bufferSize; i++) {
-            data[i] = (Math.random() * 2 - 1) * volume;
-        }
-        const source = c.createBufferSource();
-        source.buffer = buffer;
-        const gain = c.createGain();
-        gain.gain.setValueAtTime(volume, c.currentTime + startTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, c.currentTime + startTime + duration);
-        source.connect(gain);
-        gain.connect(c.destination);
-        source.start(c.currentTime + startTime);
-    }
-
     return {
-        toggleMute, isMuted,
+        toggleMute,
+        isMuted,
 
         cardDeal() {
-            if (muted) return;
-            noise(0.08, 0.2);
-            tone(800, 0.06, 'sine', 0.1);
+            play('deal', 0.7);
         },
 
         cardFlip() {
-            if (muted) return;
-            tone(1200, 0.05, 'sine', 0.15);
-            tone(1800, 0.04, 'sine', 0.1, 0.03);
+            play(rnd('slide1','slide2','slide3','slide4'), 0.65);
         },
 
         chipBet() {
-            if (muted) return;
-            tone(2000, 0.04, 'sine', 0.12);
-            tone(2500, 0.04, 'sine', 0.1, 0.04);
-            tone(3000, 0.03, 'sine', 0.08, 0.07);
+            play(rnd('chipLay1','chipLay2','chipLay3'), 0.75);
         },
 
         fold() {
-            if (muted) return;
-            noise(0.12, 0.1);
-            tone(300, 0.1, 'sine', 0.08);
+            play(rnd('shove1','shove2'), 0.7);
         },
 
         check() {
-            if (muted) return;
-            tone(600, 0.06, 'square', 0.1);
+            play(rnd('place1','place2'), 0.6);
         },
 
         allIn() {
-            if (muted) return;
-            tone(400, 0.15, 'sawtooth', 0.15);
-            tone(600, 0.15, 'sawtooth', 0.12, 0.1);
-            tone(800, 0.15, 'sawtooth', 0.12, 0.2);
-            tone(1000, 0.2, 'sawtooth', 0.15, 0.3);
+            play('collide', 0.85);
         },
 
         win() {
-            if (muted) return;
-            tone(523, 0.15, 'square', 0.12);
-            tone(659, 0.15, 'square', 0.12, 0.12);
-            tone(784, 0.15, 'square', 0.12, 0.24);
-            tone(1047, 0.3, 'square', 0.15, 0.36);
+            play(rnd('stack1','stack2'), 0.7);
+            setTimeout(() => play('winJingle', 0.55), 350);
         },
 
         blindsWarning() {
-            if (muted) return;
-            tone(880, 0.15, 'sine', 0.15);
-            tone(880, 0.15, 'sine', 0.15, 0.25);
+            play('bong', 0.55);
+            setTimeout(() => play('bong', 0.45), 280);
         },
 
         blindsUp() {
-            if (muted) return;
-            tone(660, 0.12, 'square', 0.15);
-            tone(880, 0.12, 'square', 0.15, 0.12);
-            tone(1100, 0.2, 'square', 0.18, 0.24);
+            play('confirm1', 0.65);
         },
 
         playerBust() {
-            if (muted) return;
-            tone(400, 0.2, 'sawtooth', 0.15);
-            tone(300, 0.2, 'sawtooth', 0.12, 0.15);
-            tone(200, 0.3, 'sawtooth', 0.1, 0.3);
+            play(rnd('error1','error2'), 0.6);
         },
 
         gameOver() {
-            if (muted) return;
-            const notes = [523, 659, 784, 1047, 784, 1047, 1319];
-            notes.forEach((n, i) => {
-                tone(n, 0.2, 'square', 0.15, i * 0.15);
-            });
-        }
+            play('gameOverJingle', 0.7);
+        },
     };
 })();
