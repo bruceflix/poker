@@ -699,15 +699,25 @@ const UI = (() => {
 
     function renderCard(card, faceUp) {
         if (!faceUp || !card) {
-            return '<div class="card card-back"><div class="card-back-pattern"></div></div>';
+            return `<div class="card card-back">
+                <div class="card-back-inner"></div>
+                <div class="card-back-pattern"></div>
+            </div>`;
         }
-        const suitClass = Game.SUITS[card.suit];
-        const isRed = card.suit <= 1;
-        const symbol = Game.RANK_SYMBOLS[card.rank];
-        const suitChar = Game.SUIT_SYMBOLS[Game.SUITS[card.suit]];
-        return `<div class="card card-face ${suitClass} ${isRed ? 'red' : 'black'}">
-            <span class="card-rank">${symbol}</span>
-            <span class="card-suit">${suitChar}</span>
+        const suit     = Game.SUITS[card.suit];   // 'hearts' | 'diamonds' | 'clubs' | 'spades'
+        const symbol   = Game.RANK_SYMBOLS[card.rank];
+        const suitChar = Game.SUIT_SYMBOLS[suit];
+        // Copag Jumbo Index 4-colour: TL index + centered pip + BR index (rotated)
+        return `<div class="card card-face ${suit}">
+            <div class="card-corner card-corner-tl">
+                <span class="card-rank">${symbol}</span>
+                <span class="card-suit">${suitChar}</span>
+            </div>
+            <div class="card-center-pip">${suitChar}</div>
+            <div class="card-corner card-corner-br">
+                <span class="card-rank">${symbol}</span>
+                <span class="card-suit">${suitChar}</span>
+            </div>
         </div>`;
     }
 

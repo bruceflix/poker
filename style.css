@@ -647,8 +647,9 @@ html, body {
     height: 152px;
 }
 
-.player-cards .card-rank { font-size: 2.3rem; }
-.player-cards .card-suit  { font-size: 2.1rem; }
+.player-cards .card-rank       { font-size: 2rem; }
+.player-cards .card-suit       { font-size: 1.5rem; }
+.player-cards .card-center-pip { font-size: 3.5rem; }
 
 .player-chips {
     display: flex;
@@ -880,35 +881,72 @@ html, body {
     border-radius: 14px;
 }
 
-#community-cards .card-rank {
-    font-size: 4.5rem;
-}
+#community-cards .card-face { padding: 14px; }
+#community-cards .card-rank { font-size: 4.5rem; }
+#community-cards .card-suit { font-size: 3.5rem; }
+#community-cards .card-center-pip { font-size: 9rem; }
 
-#community-cards .card-suit {
-    font-size: 4rem;
-}
-
+/* ── Copag Jumbo Index 4-colour face ── */
 .card-face {
     background: #fff;
-    border: 2px solid #ddd;
+    border: 2px solid #bbb;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 6px;
+    position: relative;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.06);
 }
 
-.card-face.red {
-    color: #d32f2f;
+/* 4-colour suit palette — Copag standard */
+.card-face.hearts   { --suit-color: #C62828; }
+.card-face.diamonds { --suit-color: #1565C0; }
+.card-face.clubs    { --suit-color: #2E7D32; }
+.card-face.spades   { --suit-color: #111111; }
+
+/* Corner index block (top-left and bottom-right) */
+.card-corner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1;
+    color: var(--suit-color, #111);
+    z-index: 1;
 }
 
-.card-face.black {
-    color: #222;
+.card-corner-br {
+    align-self: flex-end;
+    transform: rotate(180deg);
 }
 
 .card-rank {
-    font-size: 1rem;
+    font-size: 2rem;
+    font-weight: 900;
     line-height: 1;
+    color: inherit;
+    font-family: 'Georgia', 'Times New Roman', serif;
+    letter-spacing: -0.03em;
 }
 
 .card-suit {
-    font-size: 0.95rem;
+    font-size: 1.5rem;
     line-height: 1;
+    color: inherit;
+    margin-top: 1px;
+}
+
+/* Large central pip */
+.card-center-pip {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 3.5rem;
+    color: var(--suit-color, #111);
+    line-height: 1;
+    pointer-events: none;
+    opacity: 0.88;
+    user-select: none;
 }
 
 /* ====== HAND HISTORY INLINE ====== */
@@ -944,8 +982,10 @@ html, body {
     height: 42px;
 }
 
-.hh-row-cards .card-rank { font-size: 0.7rem; }
-.hh-row-cards .card-suit { font-size: 0.65rem; }
+.hh-row-cards .card-face  { padding: 2px; }
+.hh-row-cards .card-rank  { font-size: 0.65rem; }
+.hh-row-cards .card-suit  { font-size: 0.5rem; }
+.hh-row-cards .card-center-pip { font-size: 0.85rem; }
 
 .hh-no-history {
     font-size: 0.65rem;
@@ -953,23 +993,38 @@ html, body {
     font-style: italic;
 }
 
+/* Copag-style back: navy blue with white inner border + crosshatch */
 .card-back {
-    background: linear-gradient(135deg, #1565c0, #0d47a1);
-    border: 2px solid #1976d2;
+    background: #0D47A1;
+    border: 2px solid #1565C0;
     overflow: hidden;
+    position: relative;
+}
+
+/* White inner border (classic Copag feature) */
+.card-back-inner {
+    position: absolute;
+    inset: 5px;
+    border: 2px solid rgba(255,255,255,0.5);
+    border-radius: 3px;
+    z-index: 1;
+    pointer-events: none;
 }
 
 .card-back-pattern {
-    width: 100%;
-    height: 100%;
-    background: repeating-linear-gradient(
-        45deg,
-        transparent,
-        transparent 3px,
-        rgba(255,255,255,0.08) 3px,
-        rgba(255,255,255,0.08) 6px
-    );
-    border-radius: 4px;
+    position: absolute;
+    inset: 0;
+    background:
+        repeating-linear-gradient(
+            45deg,
+            transparent, transparent 4px,
+            rgba(255,255,255,0.07) 4px, rgba(255,255,255,0.07) 8px
+        ),
+        repeating-linear-gradient(
+            -45deg,
+            transparent, transparent 4px,
+            rgba(255,255,255,0.07) 4px, rgba(255,255,255,0.07) 8px
+        );
 }
 
 .card-slot {
@@ -981,11 +1036,14 @@ html, body {
 @media (max-width: 1200px) {
     .player-section { min-width: 240px; padding: 7px 10px; }
     .player-cards .card { width: 80px; height: 116px; }
-    .player-cards .card-rank { font-size: 1.8rem; }
-    .player-cards .card-suit  { font-size: 1.6rem; }
+    .player-cards .card-rank       { font-size: 1.5rem; }
+    .player-cards .card-suit       { font-size: 1.15rem; }
+    .player-cards .card-center-pip { font-size: 2.5rem; }
     #community-cards .card { width: 120px; height: 168px; border-radius: 10px; }
+    #community-cards .card-face { padding: 10px; }
     #community-cards .card-rank { font-size: 2.8rem; }
-    #community-cards .card-suit { font-size: 2.5rem; }
+    #community-cards .card-suit { font-size: 2.2rem; }
+    #community-cards .card-center-pip { font-size: 5.5rem; }
     .pot-total { font-size: 1.4rem; }
     .chip-slice { width: 42px; height: 10px; border-top-width: 4px; }
     .chip-stack-label { font-size: 0.62rem; }
@@ -996,11 +1054,14 @@ html, body {
     /* 4K / 2K — edge-hugging handled by JS; scale content up */
     .player-section { min-width: 420px; padding: 14px 18px; }
     .player-cards .card { width: 130px; height: 190px; }
-    .player-cards .card-rank { font-size: 3rem; }
-    .player-cards .card-suit  { font-size: 2.7rem; }
+    .player-cards .card-rank       { font-size: 2.5rem; }
+    .player-cards .card-suit       { font-size: 2rem; }
+    .player-cards .card-center-pip { font-size: 4.5rem; }
     #community-cards .card { width: 220px; height: 308px; border-radius: 16px; }
+    #community-cards .card-face { padding: 16px; }
     #community-cards .card-rank { font-size: 5.5rem; }
-    #community-cards .card-suit { font-size: 5rem; }
+    #community-cards .card-suit { font-size: 4.5rem; }
+    #community-cards .card-center-pip { font-size: 11rem; }
     .player-name { font-size: 1.5rem; }
     .pot-total { font-size: 2.4rem; }
     #blind-info { font-size: 1.4rem; }
