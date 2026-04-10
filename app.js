@@ -86,19 +86,21 @@ const App = (() => {
         }
 
         if (state.phase === 'showdown' || state.phase === 'handOver') {
-            if (autoAdvanceTimer) clearTimeout(autoAdvanceTimer);
-            const delay = state.phase === 'showdown' ? 4000 : 2500;
-            autoAdvanceTimer = setTimeout(() => {
-                autoAdvanceTimer = null;
+            // Only start the timer once — don't reset it on every blind-timer tick
+            if (!autoAdvanceTimer) {
+                const delay = state.phase === 'showdown' ? 4000 : 2500;
+                autoAdvanceTimer = setTimeout(() => {
+                    autoAdvanceTimer = null;
 
-                // Don't advance while paused — re-fetch live state
-                const currentState = Game.getState();
-                if (currentState && currentState.paused) {
-                    waitForUnpause(() => finishAndAdvance());
-                    return;
-                }
-                finishAndAdvance();
-            }, delay);
+                    // Don't advance while paused — re-fetch live state
+                    const currentState = Game.getState();
+                    if (currentState && currentState.paused) {
+                        waitForUnpause(() => finishAndAdvance());
+                        return;
+                    }
+                    finishAndAdvance();
+                }, delay);
+            }
         }
     }
 
