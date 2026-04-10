@@ -784,8 +784,9 @@ const Game = (() => {
         if (!state.betSizingMode) return;
         const p = state.players[state.betSizingPlayer];
         const maxBet = p.chips + p.bet;
+        const minBet = Math.min(getMinRaise(), maxBet); // can't require more chips than player has
         const bb = bigBlind();
-        state.betSizingAmount = Math.max(getMinRaise(), Math.min(maxBet, state.betSizingAmount + delta * bb));
+        state.betSizingAmount = Math.max(minBet, Math.min(maxBet, state.betSizingAmount + delta * bb));
         notify();
     }
 

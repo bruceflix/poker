@@ -777,6 +777,9 @@ html, body {
 .player-bet-sizing {
     margin-top: 5px;
 }
+.player-bet-sizing.hidden {
+    display: none;
+}
 
 .sizing-amount {
     font-size: 1.3rem;
