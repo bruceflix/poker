@@ -275,7 +275,8 @@ const UI = (() => {
                 container.querySelectorAll('.chip-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 startingChips = parseInt(btn.dataset.chips);
-                document.getElementById('customChips').value = '';
+                const customChipsEl = document.getElementById('customChips');
+                if (customChipsEl) customChipsEl.value = '';
             });
         });
         document.getElementById('customChips')?.addEventListener('input', (e) => {
@@ -328,7 +329,7 @@ const UI = (() => {
 
         renderNameInputs();
 
-        document.getElementById('startGameBtn').addEventListener('click', () => {
+        document.getElementById('startGameBtn')?.addEventListener('click', () => {
             const inputs = container.querySelectorAll('.player-name-input');
             let names = Array.from(inputs).map(inp => inp.value.trim() || `Player ${parseInt(inp.dataset.index)+1}`);
 
@@ -414,14 +415,14 @@ const UI = (() => {
         // Nudge all sections to their nearest screen edge after layout
         requestAnimationFrame(repositionPlayersToEdge);
 
-        document.getElementById('pauseBtn').addEventListener('click', () => {
+        document.getElementById('pauseBtn')?.addEventListener('click', () => {
             App.togglePause();
         });
-        document.getElementById('muteBtn').addEventListener('click', () => {
+        document.getElementById('muteBtn')?.addEventListener('click', (e) => {
             const nowMuted = Audio.toggleMute();
-            document.getElementById('muteBtn').textContent = nowMuted ? '🔇' : '🔊';
+            e.currentTarget.textContent = nowMuted ? '🔇' : '🔊';
         });
-        document.getElementById('settingsBtn').addEventListener('click', () => {
+        document.getElementById('settingsBtn')?.addEventListener('click', () => {
             App.togglePause(true); // force pause
             showSettingsOverlay(state);
         });
@@ -690,6 +691,7 @@ const UI = (() => {
             (p.allIn ? ' all-in' : '');
 
         const pos = positions[i];
+        if (!pos) return;
         section.style.left = pos.left + '%';
         section.style.top = pos.top + '%';
         section.style.transform = `translate(-50%, -50%) rotate(${pos.rot}deg)`;
@@ -1002,8 +1004,8 @@ const UI = (() => {
             });
 
             // Apply timer duration change
-            const mins = parseInt(document.getElementById('settingsBlindMins').value) || 0;
-            const secs = parseInt(document.getElementById('settingsBlindSecs').value) || 0;
+            const mins = parseInt(document.getElementById('settingsBlindMins')?.value) || 0;
+            const secs = parseInt(document.getElementById('settingsBlindSecs')?.value) || 0;
             const newDuration = mins * 60 + secs;
             if (newDuration > 0) {
                 state.blindDuration = newDuration;
