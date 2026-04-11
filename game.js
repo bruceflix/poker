@@ -452,7 +452,11 @@ const Game = (() => {
     }
 
     function allActed() {
-        for (const p of playersStillBetting()) {
+        // For every player still in the hand (not eliminated, not folded):
+        // they must have either gone all-in (cannot act further) OR
+        // acted this round AND matched the current bet.
+        for (const p of playersInHand()) {
+            if (p.allIn) continue; // all-in players are satisfied without acting
             if (!state.actedThisRound.has(p.seatIndex) || p.bet < state.currentBet) {
                 return false;
             }
