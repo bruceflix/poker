@@ -196,7 +196,9 @@ const App = (() => {
                 const p = state.players[pi];
                 if (p && p.isAI && !aiAckScheduled.has(pi)) {
                     aiAckScheduled.add(pi);
-                    const delay = 1200 + Math.random() * 800;
+                    const delay = state.ranOutBoard
+                        ? 8000 + Math.random() * 2000  // dramatic pause after full board runout
+                        : 1200 + Math.random() * 800;
                     setTimeout(() => onPlayerAction(pi, 'ack', null), delay);
                 }
             }
@@ -263,6 +265,7 @@ const App = (() => {
                 const state = Game.getState();
                 if (!state) return;
                 if (state.phase !== 'showdown' && state.phase !== 'handOver') return;
+                if (UI.isCardsAnimating()) return; // don't ACK during dramatic card reveal
                 ackedPlayers.add(playerIndex);
                 const allAcked = playersToAck.every(i => ackedPlayers.has(i));
                 UI.updateTable(state, getAckInfo());

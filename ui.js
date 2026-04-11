@@ -66,6 +66,9 @@ const UI = (() => {
     // from player bet labels to the pot when a betting round ends.
     let lastRenderedBets = {}; // { playerIdx: amount }
 
+    // Last ackInfo passed to updateTable — used by the deferred runout re-render
+    let lastAckInfo = null;
+
 
     function renderChips(amount) {
         if (!amount || amount <= 0) return '';
@@ -438,6 +441,7 @@ const UI = (() => {
 
     function updateTable(state, ackInfo = null) {
         if (!state) return;
+        lastAckInfo = ackInfo;
         // Ensure positions is always populated before any player update runs.
         // Guards against updateTable being called before showTable (e.g. from a save/load path).
         if (positions.length === 0) {
@@ -565,7 +569,22 @@ const UI = (() => {
         const startRevealedCount = commRevealedCount;
         let seq = 0;
         function flipNext() {
-            if (seq >= newCount) { commAnimating = false; return; }
+            if (seq >= newCount) {
+                // Pause briefly after the last card settles before announcing results.
+                // commAnimating stays true during this window so ACK is still blocked.
+                if (state.phase === 'showdown' || state.phase === 'handOver') {
+                    setTimeout(() => {
+                        commAnimating = false;
+                        const current = Game.getState();
+                        if (current && (current.phase === 'showdown' || current.phase === 'handOver')) {
+                            updateTable(current, lastAckInfo);
+                        }
+                    }, 400);
+                } else {
+                    commAnimating = false;
+                }
+                return;
+            }
 
             const cardIdx = startRevealedCount + seq; // fixed: was commRevealedCount+seq (grew each flip)
             const delay   = seq === 0 ? initialMs : gapMs;
@@ -766,7 +785,9 @@ const UI = (() => {
         const betEl = document.getElementById(`bet-${i}`);
         if (betEl) {
             const inFinish = state.phase === 'showdown' || state.phase === 'handOver';
-            if (inFinish && state.showdownResults && !p.eliminated) {
+            // Suppress result announcement while community cards are still being revealed
+            const revealPending = inFinish && (commAnimating || commRevealedCount < state.communityCards.length);
+            if (inFinish && state.showdownResults && !p.eliminated && !revealPending) {
                 let isWinner = false, winnerHand = null, loserHand = null;
                 for (const r of state.showdownResults) {
                     const w = r.winners.find(w => w.seatIndex === i);
@@ -804,11 +825,14 @@ const UI = (() => {
             if (p.eliminated) {
                 keysEl.innerHTML = '';
             } else if (inFinish) {
-                if (ackInfo && ackInfo.playersToAck.includes(i)) {
+                const revealPending = commAnimating || commRevealedCount < state.communityCards.length;
+                if (!revealPending && ackInfo && ackInfo.playersToAck.includes(i)) {
                     const hasAcked = ackInfo.ackedPlayers.has(i);
                     keysEl.innerHTML = hasAcked
                         ? '<span class="ack-waiting">Waiting for others\u2026</span>'
                         : '<span class="ack-prompt">Press any key to continue</span>';
+                } else if (revealPending) {
+                    keysEl.innerHTML = ''; // hold until all cards are shown
                 }
             } else if (isActive) {
                 if (p.isAI) {
@@ -1311,9 +1335,13 @@ const UI = (() => {
         return `<div class="hr-title">&#9824; Hand Rankings <span class="hr-subtitle">(best \u2192 worst)</span></div>${rows}`;
     }
 
+    function isCardsAnimating() {
+        return commAnimating;
+    }
+
     return {
         showConfig, showTable, updateTable, showBlindAlert, showGameOver,
         applyBg, setCurrentBgIndex, getCurrentBgIndex, BG_PRESETS,
-        toggleHandHistory, animateDeal, animateChipPush
+        toggleHandHistory, animateDeal, animateChipPush, isCardsAnimating
     };
 })();
