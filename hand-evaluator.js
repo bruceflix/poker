@@ -101,6 +101,9 @@ const HandEvaluator = (() => {
 
     // Evaluate best 5-card hand from 7 cards
     function evaluate(sevenCards) {
+        if (!Array.isArray(sevenCards) || sevenCards.length < 5) {
+            throw new Error('evaluate: need at least 5 cards, got ' + (Array.isArray(sevenCards) ? sevenCards.length : typeof sevenCards));
+        }
         const combos = combinations(sevenCards, 5);
         let bestScore = null;
         let bestCards = null;
