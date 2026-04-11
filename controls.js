@@ -153,6 +153,59 @@ const Controls = (() => {
         }
     }
 
+    // Mouse click equivalent — same logic as handleKeyDown minus peek (hold) and keyup
+    function triggerAction(player, keyIndex) {
+        if (!initialized) return;
+        const state = getState();
+        if (!state || state.phase === 'gameOver') return;
+
+        const p = state.players[player];
+        if (!p || p.eliminated) return;
+
+        if (state.phase === 'showdown' || state.phase === 'handOver') {
+            if (onAction) onAction(player, 'ack', null);
+            return;
+        }
+
+        if (keyIndex === 0) return; // peek = hold; not meaningful for click
+
+        if (keyIndex === 1 && state.activePlayerIndex !== player && !p.folded && !p.eliminated) {
+            if (onAction) onAction(player, 'history', null);
+            return;
+        }
+
+        if (state.activePlayerIndex !== player) return;
+        if (p.folded || p.allIn) return;
+
+        if (state.betSizingMode && state.betSizingPlayer === player) {
+            switch (keyIndex) {
+                case 1: if (onAction) onAction(player, 'adjustBet', -1); break;
+                case 2: if (onAction) onAction(player, 'cancelBet', null); break;
+                case 3: if (onAction) onAction(player, 'adjustBet', 1); break;
+                case 4: {
+                    const betAmount = state.betSizingAmount;
+                    const chipEl = document.getElementById(`chips-${player}`);
+                    const chipRect = chipEl ? chipEl.getBoundingClientRect() : null;
+                    if (onAction) onAction(player, 'confirmBet', { betAmount, chipRect });
+                    break;
+                }
+            }
+        } else {
+            switch (keyIndex) {
+                case 1: if (onAction) onAction(player, 'fold', null); break;
+                case 2:
+                    if (state.currentBet > p.bet) {
+                        if (onAction) onAction(player, 'call', null);
+                    } else {
+                        if (onAction) onAction(player, 'check', null);
+                    }
+                    break;
+                case 3: if (onAction) onAction(player, 'enterBetSizing', null); break;
+                case 4: if (onAction) onAction(player, 'allIn', null); break;
+            }
+        }
+    }
+
     function isPeeking(playerIndex) {
         return peekingPlayers.has(playerIndex);
     }
@@ -176,5 +229,5 @@ const Controls = (() => {
         return KEY_MAP[playerIndex];
     }
 
-    return { init, destroy, isPeeking, getKeyLabels, getKeyMap, KEY_MAP };
+    return { init, destroy, isPeeking, getKeyLabels, getKeyMap, triggerAction, KEY_MAP };
 })();

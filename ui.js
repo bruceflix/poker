@@ -480,6 +480,18 @@ const UI = (() => {
             App.togglePause(true); // force pause
             showSettingsOverlay(state);
         });
+
+        // Delegated click handler for mouse-clickable action buttons and ACK prompts
+        document.getElementById('table')?.addEventListener('click', (e) => {
+            const ackEl = e.target.closest('[data-ack-player]');
+            if (ackEl) {
+                Controls.triggerAction(parseInt(ackEl.dataset.ackPlayer), -1);
+                return;
+            }
+            const keyEl = e.target.closest('[data-keyindex]');
+            if (!keyEl) return;
+            Controls.triggerAction(parseInt(keyEl.dataset.player), parseInt(keyEl.dataset.keyindex));
+        });
     }
 
     function buildPlayerHTML(p, i) {
@@ -875,9 +887,17 @@ const UI = (() => {
                 }
             } else {
                 const activeBettingPhase = ['preflop', 'flop', 'turn', 'river'].includes(state.phase);
-                const showBet = activeBettingPhase && p.bet > 0;
-                betEl.textContent = showBet ? p.bet.toLocaleString() : '';
-                betEl.className = 'player-bet-label';
+                const showBet = activeBettingPhase && p.bet > 0 && p.lastAction !== 'CHECK' && p.lastAction !== 'FOLD';
+                if (showBet) {
+                    betEl.textContent = p.bet.toLocaleString();
+                    betEl.className = 'player-bet-label';
+                } else if (activeBettingPhase && p.lastAction) {
+                    betEl.textContent = p.lastAction;
+                    betEl.className = `player-bet-label action-label action-${p.lastAction.toLowerCase().replace('-','')}`;
+                } else {
+                    betEl.textContent = '';
+                    betEl.className = 'player-bet-label';
+                }
                 lastRenderedBets[i] = showBet ? p.bet : 0;
             }
         }
@@ -894,7 +914,7 @@ const UI = (() => {
                     const hasAcked = ackInfo.ackedPlayers.has(i);
                     keysEl.innerHTML = hasAcked
                         ? '<span class="ack-waiting">Waiting for others\u2026</span>'
-                        : '<span class="ack-prompt">Press any key to continue</span>';
+                        : `<span class="ack-prompt" data-ack-player="${i}">Press any key to continue</span>`;
                 } else if (revealPending) {
                     keysEl.innerHTML = ''; // hold until all cards are shown
                 }
@@ -905,7 +925,7 @@ const UI = (() => {
                     const labels = Controls.getKeyLabels(i);
                     const keys = Controls.getKeyMap(i);
                     keysEl.innerHTML = labels.map((label, k) =>
-                        `<span class="key-label"><kbd>${keys[k].toUpperCase()}</kbd><span class="key-action">${label}</span></span>`
+                        `<span class="key-label" data-player="${i}" data-keyindex="${k}"><kbd>${keys[k].toUpperCase()}</kbd><span class="key-action">${label}</span></span>`
                     ).join('');
                 }
             } else if (!p.isAI) {

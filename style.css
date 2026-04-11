@@ -897,6 +897,19 @@ html, body {
     letter-spacing: 1px;
 }
 
+/* Last-action label variants */
+.action-label {
+    font-size: 1.0rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+.action-fold   { color: rgba(255,255,255,0.45); text-shadow: none; }
+.action-check  { color: #7ec8e3; text-shadow: 0 0 10px rgba(126,200,227,0.5); }
+.action-call   { color: #a8e6a3; text-shadow: 0 0 10px rgba(168,230,163,0.5); }
+.action-raise  { color: #ffd700; }
+.action-allin  { color: #ff6b6b; text-shadow: 0 0 14px rgba(255,107,107,0.7); }
+
 /* Acknowledgment prompts */
 .ack-prompt {
     font-size: 0.72rem;
@@ -904,6 +917,7 @@ html, body {
     letter-spacing: 1px;
     text-transform: uppercase;
     animation: ack-blink 1.1s ease-in-out infinite;
+    cursor: pointer;
 }
 .ack-waiting {
     font-size: 0.7rem;
@@ -936,6 +950,17 @@ html, body {
     min-width: 52px;
     flex: 1;
     white-space: nowrap;
+}
+.key-label[data-keyindex] {
+    cursor: pointer;
+    transition: background 0.12s, border-color 0.12s;
+}
+.key-label[data-keyindex]:hover {
+    background: rgba(255,255,255,0.15);
+    border-color: rgba(255,255,255,0.45);
+}
+.key-label[data-keyindex]:active {
+    background: rgba(255,255,255,0.22);
 }
 
 .key-label kbd {

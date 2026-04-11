@@ -80,6 +80,7 @@ const Game = (() => {
             showdownResults: null,
             eliminatedThisHand: [],
             totalPlayers: n,
+            ranOutBoard: false,
             paused: false,
             blindTimerInterval: null,
             onUpdate: null, // callback for UI updates
@@ -160,6 +161,7 @@ const Game = (() => {
         state.showdownResults = null;
         state.eliminatedThisHand = [];
         state.betSizingMode = false;
+        state.ranOutBoard = false;
 
         // Reset player hand state
         for (const p of state.players) {
@@ -168,6 +170,7 @@ const Game = (() => {
             p.allIn = false;
             p.bet = 0;
             p.totalBetThisHand = 0;
+            p.lastAction = null;
         }
 
         // Move dealer button
@@ -241,6 +244,7 @@ const Game = (() => {
     function fold(playerIndex) {
         if (!canAct(playerIndex)) return false;
         state.players[playerIndex].folded = true;
+        state.players[playerIndex].lastAction = 'FOLD';
         // Shallow-clone the Set so we never mutate the existing reference
         state.actedThisRound = new Set([...state.actedThisRound, playerIndex]);
         Audio.fold();
@@ -259,6 +263,7 @@ const Game = (() => {
         if (!canAct(playerIndex)) return false;
         const p = state.players[playerIndex];
         if (state.currentBet > p.bet) return false; // Must call, not check
+        p.lastAction = 'CHECK';
         state.actedThisRound = new Set([...state.actedThisRound, playerIndex]);
         Audio.check();
         advanceAction();
@@ -279,6 +284,7 @@ const Game = (() => {
         p.chips -= toCall;
         p.bet += toCall;
         p.totalBetThisHand += toCall;
+        p.lastAction = 'CALL';
         state.actedThisRound = new Set([...state.actedThisRound, playerIndex]);
         Audio.chipBet();
         advanceAction();
@@ -307,6 +313,7 @@ const Game = (() => {
         state.currentBet = totalBetAmount;
         p.bet = totalBetAmount;
         p.totalBetThisHand += cost;
+        p.lastAction = 'RAISE';
         state.lastRaiserIndex = playerIndex;
 
         // Reopens action for everyone except raiser — new Set reference
@@ -326,6 +333,7 @@ const Game = (() => {
         p.bet = totalBet;
         p.chips = 0;
         p.allIn = true;
+        p.lastAction = 'ALL-IN';
 
         // If it's a full raise, reopen action
         if (raiseAmount >= state.minRaise) {
@@ -504,8 +512,8 @@ const Game = (() => {
         state.betSizingMode = false;
         state.betSizingPlayer = -1;
 
-        // Reset bets for new round
-        for (const p of state.players) p.bet = 0;
+        // Reset bets and last-action display for new round
+        for (const p of state.players) { p.bet = 0; p.lastAction = null; }
 
         const isHeadsUp = activePlayers().length === 2;
 
@@ -564,6 +572,8 @@ const Game = (() => {
         if (state.phase !== 'river') {
             state.phase = 'river';
         }
+        // Flag so the UI can delay announcing results until all cards are revealed
+        state.ranOutBoard = true;
         Audio.cardFlip();
         doShowdown();
     }
