@@ -135,18 +135,6 @@ const Game = (() => {
         return -1;
     }
 
-    // Find next player in hand (not folded, not eliminated) from idx
-    function nextInHandFrom(idx) {
-        let i = (idx + 1) % state.players.length;
-        let count = 0;
-        while (count < state.players.length) {
-            if (!state.players[i].eliminated && !state.players[i].folded) return i;
-            i = (i + 1) % state.players.length;
-            count++;
-        }
-        return -1;
-    }
-
     // Find next player who can still bet (not all-in, not folded, not eliminated)
     function nextBettingFrom(idx) {
         let i = (idx + 1) % state.players.length;
@@ -547,25 +535,18 @@ const Game = (() => {
                 return;
             }
         } else {
-            let first = nextActiveFrom(state.dealerIndex);
-            // Find first non-folded, non-all-in player
-            let count = 0;
-            while (count < state.players.length) {
-                if (!state.players[first].folded && !state.players[first].allIn) break;
-                first = nextActiveFrom(first);
-                count++;
+            // First to act post-flop: first player after dealer who can still bet
+            const first = nextBettingFrom(state.dealerIndex);
+            if (first === -1) {
+                // No one can bet — run out the board
+                advanceAction();
+                return;
             }
             state.activePlayerIndex = first;
         }
 
         state.firstActorIndex = state.activePlayerIndex;
-
-        // Check if active player can actually act
-        if (state.players[state.activePlayerIndex].allIn || state.players[state.activePlayerIndex].folded) {
-            advanceAction();
-        } else {
-            notify();
-        }
+        notify();
     }
 
     function runOutBoard() {
