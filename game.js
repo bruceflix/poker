@@ -588,7 +588,12 @@ const Game = (() => {
                 potAmount += contribution;
             }
             if (potAmount > 0) {
-                addToPots(potAmount, eligible);
+                if (eligible.length === 1) {
+                    // Only one player contests this tier (e.g. two unequal all-ins) — return immediately
+                    state.players[eligible[0]].chips += potAmount;
+                } else {
+                    addToPots(potAmount, eligible);
+                }
             }
             prevTier = tier;
         }
@@ -601,7 +606,14 @@ const Game = (() => {
             remaining += Math.max(0, p.bet - prevTier);
         }
         if (remaining > 0) {
-            addToPots(remaining, eligible);
+            if (eligible.length === 1) {
+                // Only one player can contest these chips — return them immediately.
+                // This avoids a confusing "side pot" that resolves automatically at showdown
+                // (common in heads-up when the short-stack can't match a larger bet).
+                state.players[eligible[0]].chips += remaining;
+            } else {
+                addToPots(remaining, eligible);
+            }
         }
 
         // Clear bets
