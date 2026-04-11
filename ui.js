@@ -595,8 +595,14 @@ const UI = (() => {
                 ? renderCard(state.communityCards[i], true)
                 : renderCard(null, false);
         }
-        for (let i = state.communityCards.length; i < 5; i++) {
-            html += '<div class="card card-slot"></div>';
+        // Only show empty slots once at least one card has been dealt (flop or later).
+        // Before the flop, communityCards.length === 0 — rendering 5 huge dashed
+        // placeholders clutters the center and can visually encroach on the top
+        // player section at 1080p.
+        if (state.communityCards.length > 0) {
+            for (let i = state.communityCards.length; i < 5; i++) {
+                html += '<div class="card card-slot"></div>';
+            }
         }
         // Only update DOM if content changed (avoids killing in-progress transitions)
         if (el.dataset.staticKey !== `${revealedCount}/${state.communityCards.length}`) {
