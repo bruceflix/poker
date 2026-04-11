@@ -887,18 +887,23 @@ const UI = (() => {
                 }
             } else {
                 const activeBettingPhase = ['preflop', 'flop', 'turn', 'river'].includes(state.phase);
-                const showBet = activeBettingPhase && p.bet > 0 && p.lastAction !== 'CHECK' && p.lastAction !== 'FOLD';
-                if (showBet) {
-                    betEl.textContent = p.bet.toLocaleString();
+                const hasAmount = activeBettingPhase && p.bet > 0 && p.lastAction !== 'CHECK' && p.lastAction !== 'FOLD';
+                const hasAction = activeBettingPhase && p.lastAction;
+                if (hasAction || hasAmount) {
+                    const actionKey = p.lastAction ? p.lastAction.toLowerCase().replace('-','') : '';
+                    const actionHtml = hasAction
+                        ? `<span class="bet-action-word action-${actionKey}">${p.lastAction}</span>`
+                        : '';
+                    const amountHtml = hasAmount
+                        ? `<span class="bet-amount-word">${p.bet.toLocaleString()}</span>`
+                        : '';
+                    betEl.innerHTML = actionHtml + amountHtml;
                     betEl.className = 'player-bet-label';
-                } else if (activeBettingPhase && p.lastAction) {
-                    betEl.textContent = p.lastAction;
-                    betEl.className = `player-bet-label action-label action-${p.lastAction.toLowerCase().replace('-','')}`;
                 } else {
                     betEl.textContent = '';
                     betEl.className = 'player-bet-label';
                 }
-                lastRenderedBets[i] = showBet ? p.bet : 0;
+                lastRenderedBets[i] = hasAmount ? p.bet : 0;
             }
         }
 

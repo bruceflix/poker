@@ -875,6 +875,25 @@ html, body {
     border-radius: 8px;
     padding: 2px 10px;
     min-height: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+}
+.bet-action-word {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    line-height: 1.3;
+    text-shadow: none;
+}
+.bet-amount-word {
+    font-size: 1.5rem;
+    font-weight: 900;
+    line-height: 1.1;
+    color: #ffd700;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.95), 0 0 28px rgba(255,215,0,0.45);
 }
 
 /* Hand result variant — winner */
@@ -897,18 +916,12 @@ html, body {
     letter-spacing: 1px;
 }
 
-/* Last-action label variants */
-.action-label {
-    font-size: 1.0rem;
-    font-weight: 700;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-}
-.action-fold   { color: rgba(255,255,255,0.45); text-shadow: none; }
-.action-check  { color: #7ec8e3; text-shadow: 0 0 10px rgba(126,200,227,0.5); }
-.action-call   { color: #a8e6a3; text-shadow: 0 0 10px rgba(168,230,163,0.5); }
+/* Last-action word colour variants (used on .bet-action-word) */
+.action-fold   { color: rgba(255,255,255,0.45); }
+.action-check  { color: #7ec8e3; }
+.action-call   { color: #a8e6a3; }
 .action-raise  { color: #ffd700; }
-.action-allin  { color: #ff6b6b; text-shadow: 0 0 14px rgba(255,107,107,0.7); }
+.action-allin  { color: #ff6b6b; }
 
 /* Acknowledgment prompts */
 .ack-prompt {
