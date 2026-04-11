@@ -92,8 +92,8 @@ const Game = (() => {
         if (!state) return null;
         return {
             ...state,
-            players:             state.players.map(p => ({ ...p })),
-            communityCards:      [...state.communityCards],
+            players:             state.players.map(p => ({ ...p, cards: p.cards.map(c => ({ ...c })) })),
+            communityCards:      state.communityCards.map(c => ({ ...c })),
             pots:                state.pots.map(p => ({ ...p, eligible: [...p.eligible] })),
             actedThisRound:      new Set(state.actedThisRound),
             eliminatedThisHand:  [...state.eliminatedThisHand],
@@ -825,7 +825,7 @@ const Game = (() => {
     }
 
     function notify() {
-        if (state.onUpdate) state.onUpdate(state);
+        if (state.onUpdate) state.onUpdate(getState());
     }
 
     function setUpdateCallback(cb) {
