@@ -201,20 +201,25 @@ const Game = (() => {
             if (p.handHistory.length > 5) p.handHistory.shift();
         }
 
-        // Set first to act pre-flop
+        // Set first to act pre-flop — always use nextBettingFrom so the active player
+        // is never someone who cannot act (e.g. a blind poster who went all-in).
+        let firstActor;
         if (isHeadsUp) {
-            // Heads-up: dealer (SB) acts first pre-flop
-            state.firstActorIndex = sbIndex;
+            // Heads-up pre-flop: dealer (SB) acts first, or BB if SB is all-in
+            firstActor = state.players[sbIndex].allIn
+                ? nextBettingFrom(sbIndex)   // SB all-in: BB decides call/fold
+                : sbIndex;
         } else {
-            state.firstActorIndex = nextActiveFrom(bbIndex);
+            firstActor = nextBettingFrom(bbIndex); // first player after BB who can bet
         }
 
         state.actedThisRound = new Set();
+        state.firstActorIndex = firstActor !== -1 ? firstActor : bbIndex; // -1 means all all-in
         state.activePlayerIndex = state.firstActorIndex;
         state.phase = 'preflop';
 
-        // If active player is all-in from blind, skip to next
-        if (state.players[state.activePlayerIndex].allIn) {
+        if (firstActor === -1) {
+            // Everyone all-in from blinds — run out the board
             advanceAction();
         }
 
@@ -529,20 +534,13 @@ const Game = (() => {
                 return;
         }
 
-        // Post-flop: first to act is first active player after dealer
-        if (isHeadsUp) {
-            // Heads-up post-flop: non-dealer acts first
-            state.activePlayerIndex = nextActiveFrom(state.dealerIndex);
-            // Make sure they're in hand and can bet
-            if (state.players[state.activePlayerIndex].folded || state.players[state.activePlayerIndex].allIn) {
-                advanceAction();
-                return;
-            }
-        } else {
-            // First to act post-flop: first player after dealer who can still bet
+        // Post-flop: first player after dealer who can still bet.
+        // nextBettingFrom skips all-in and folded players so activePlayerIndex
+        // is never set to someone who cannot act.
+        {
             const first = nextBettingFrom(state.dealerIndex);
             if (first === -1) {
-                // No one can bet — run out the board
+                // No one can bet (all all-in or folded) — run out the board
                 advanceAction();
                 return;
             }
