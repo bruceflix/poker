@@ -1,5 +1,7 @@
 // game.js — Core Texas Hold'em tournament engine
 
+if (typeof CONSTANTS === 'undefined') throw new Error('game.js: constants.js must be loaded first');
+
 const Game = (() => {
     // Card/rank/blind constants live in constants.js — reference via CONSTANTS.*
     const { SUITS, RANK_SYMBOLS, SUIT_SYMBOLS, BLIND_SCHEDULES } = CONSTANTS;

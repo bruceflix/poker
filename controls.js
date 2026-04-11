@@ -1,5 +1,7 @@
 // controls.js — Keyboard input handling for 8 players × 5 keys
 
+if (typeof CONSTANTS === 'undefined') throw new Error('controls.js: constants.js must be loaded first');
+
 const Controls = (() => {
     // Key bindings and labels live in constants.js — reference via CONSTANTS.*
     const { KEY_MAP, KEY_LABELS_DEFAULT, KEY_LABELS_CALL, KEY_LABELS_SIZING } = CONSTANTS;

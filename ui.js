@@ -1,5 +1,7 @@
 // ui.js — Table rendering, config screen, settings overlay, save/load
 
+if (typeof CONSTANTS === 'undefined') throw new Error('ui.js: constants.js must be loaded first');
+
 const UI = (() => {
     // Layout constants live in constants.js — reference via CONSTANTS.*
     const { SEAT_POSITIONS, EDGE_MARGIN, CHIP_DENOMS, BG_PRESETS } = CONSTANTS;
