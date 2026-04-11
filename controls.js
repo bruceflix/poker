@@ -1,4 +1,9 @@
 // controls.js — Keyboard input handling for 8 players × 5 keys
+//
+// Controls is a pure input translator. It detects which key was pressed,
+// resolves the intended action, and fires onAction(player, action, data).
+// It never calls Game.* or UI.* directly — all state reads go through the
+// injected getState function supplied by the caller via init().
 
 if (typeof CONSTANTS === 'undefined') throw new Error('controls.js: constants.js must be loaded first');
 
@@ -8,6 +13,7 @@ const Controls = (() => {
 
     let peekingPlayers = new Set();
     let onAction = null; // callback: (playerIndex, action, data) => void
+    let getState = null; // injected by init() — no direct Game dependency
     let numPlayers = 8;
 
     // Reverse lookup: key string -> { player, keyIndex }
@@ -28,8 +34,9 @@ const Controls = (() => {
         }
     }
 
-    function init(playerCount, actionCallback) {
+    function init(playerCount, actionCallback, getStateFn) {
         onAction = actionCallback;
+        getState = getStateFn;
         buildLookup(playerCount);
         // Attach listeners exactly once — handlers check `initialized` internally
         if (!listenersAttached) {
@@ -59,7 +66,7 @@ const Controls = (() => {
 
         e.preventDefault();
         const { player, keyIndex } = mapping;
-        const state = Game.getState();
+        const state = getState();
         if (!state || state.phase === 'gameOver') return;
 
         const p = state.players[player];
@@ -89,53 +96,42 @@ const Controls = (() => {
         if (p.folded || p.allIn) return;
 
         if (state.betSizingMode && state.betSizingPlayer === player) {
-            // Bet sizing mode
+            // Bet sizing mode — gather chip rect before firing so app.js can animate
             switch (keyIndex) {
                 case 1: // Decrease
-                    Game.adjustBet(-1);
-                    Audio.chipAdjust();
                     if (onAction) onAction(player, 'adjustBet', -1);
                     break;
                 case 2: // Cancel
-                    Game.cancelBetSizing();
                     if (onAction) onAction(player, 'cancelBet', null);
                     break;
                 case 3: // Increase
-                    Game.adjustBet(1);
-                    Audio.chipAdjust();
                     if (onAction) onAction(player, 'adjustBet', 1);
                     break;
-                case 4: // Confirm
-                    const betAmount = Game.getState().betSizingAmount;
+                case 4: { // Confirm — snapshot pre-confirmation state for animation
+                    const betAmount = state.betSizingAmount;
                     const chipEl = document.getElementById(`chips-${player}`);
                     const chipRect = chipEl ? chipEl.getBoundingClientRect() : null;
-                    Game.confirmBet();
-                    if (chipRect) UI.animateChipPush(player, betAmount, chipRect);
-                    if (onAction) onAction(player, 'confirmBet', null);
+                    if (onAction) onAction(player, 'confirmBet', { betAmount, chipRect });
                     break;
+                }
             }
         } else {
             // Default mode
             switch (keyIndex) {
                 case 1: // Fold
-                    Game.fold(player);
                     if (onAction) onAction(player, 'fold', null);
                     break;
                 case 2: // Check/Call
                     if (state.currentBet > p.bet) {
-                        Game.call(player);
                         if (onAction) onAction(player, 'call', null);
                     } else {
-                        Game.check(player);
                         if (onAction) onAction(player, 'check', null);
                     }
                     break;
                 case 3: // Bet/Raise
-                    Game.enterBetSizing(player);
                     if (onAction) onAction(player, 'enterBetSizing', null);
                     break;
                 case 4: // All-in
-                    Game.allIn(player);
                     if (onAction) onAction(player, 'allIn', null);
                     break;
             }
@@ -162,7 +158,7 @@ const Controls = (() => {
     }
 
     function getKeyLabels(playerIndex) {
-        const state = Game.getState();
+        const state = getState ? getState() : null;
         if (!state) return KEY_LABELS_DEFAULT;
 
         if (state.betSizingMode && state.betSizingPlayer === playerIndex) {
@@ -170,7 +166,7 @@ const Controls = (() => {
         }
 
         const p = state.players[playerIndex];
-        if (state.currentBet > p.bet) {
+        if (p && state.currentBet > p.bet) {
             return KEY_LABELS_CALL;
         }
         return KEY_LABELS_DEFAULT;

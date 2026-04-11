@@ -36,7 +36,7 @@ const App = (() => {
 
         Game.setUpdateCallback(onStateUpdate);
         UI.showTable(state);
-        Controls.init(state.players.length, onPlayerAction);
+        Controls.init(state.players.length, onPlayerAction, Game.getState);
 
         Game.stopBlindTimer();
         Game.startBlindTimer();
@@ -140,7 +140,7 @@ const App = (() => {
         Game.setUpdateCallback(onStateUpdate);
         UI.showTable(state);
         UI.applyBg(UI.getCurrentBgIndex());
-        Controls.init(state.players.length, onPlayerAction);
+        Controls.init(state.players.length, onPlayerAction, Game.getState);
 
         Game.stopBlindTimer();
         Game.startBlindTimer();
@@ -210,23 +210,52 @@ const App = (() => {
     }
 
     function onPlayerAction(playerIndex, action, data) {
-        if (action === 'history') {
-            UI.toggleHandHistory(playerIndex, Game.getState());
-            return;
-        }
-
-        if (action === 'ack') {
-            const state = Game.getState();
-            if (!state) return;
-            if (state.phase !== 'showdown' && state.phase !== 'handOver') return;
-            ackedPlayers.add(playerIndex);
-            const allAcked = playersToAck.every(i => ackedPlayers.has(i));
-            UI.updateTable(state, getAckInfo());
-            if (allAcked) {
-                // Brief pause so the "all ready" state is visible before dealing
-                setTimeout(() => finishAndAdvance(), 500);
+        switch (action) {
+            case 'fold':
+                Game.fold(playerIndex);
+                break;
+            case 'check':
+                Game.check(playerIndex);
+                break;
+            case 'call':
+                Game.call(playerIndex);
+                break;
+            case 'enterBetSizing':
+                Game.enterBetSizing(playerIndex);
+                break;
+            case 'allIn':
+                Game.allIn(playerIndex);
+                break;
+            case 'adjustBet':
+                Game.adjustBet(data);
+                Audio.chipAdjust();
+                break;
+            case 'cancelBet':
+                Game.cancelBetSizing();
+                break;
+            case 'confirmBet': {
+                const { betAmount, chipRect } = data || {};
+                Game.confirmBet();
+                if (chipRect && betAmount) UI.animateChipPush(playerIndex, betAmount, chipRect);
+                break;
             }
-            return;
+            case 'history':
+                UI.toggleHandHistory(playerIndex, Game.getState());
+                return; // no updateTable needed — UI handles it
+            case 'ack': {
+                const state = Game.getState();
+                if (!state) return;
+                if (state.phase !== 'showdown' && state.phase !== 'handOver') return;
+                ackedPlayers.add(playerIndex);
+                const allAcked = playersToAck.every(i => ackedPlayers.has(i));
+                UI.updateTable(state, getAckInfo());
+                if (allAcked) {
+                    // Brief pause so the "all ready" state is visible before dealing
+                    setTimeout(() => finishAndAdvance(), 500);
+                }
+                return;
+            }
+            // 'peek' falls through — just trigger a re-render so UI reads isPeeking()
         }
 
         UI.updateTable(Game.getState(), getAckInfo());
