@@ -1142,6 +1142,109 @@ html, body {
     text-align: center;
 }
 
+/* ── Decorative inner frame (all face cards) ── */
+.card-inner-frame {
+    position: absolute;
+    top: 6%; left: 6%;
+    right: 6%; bottom: 6%;
+    border: 1px solid var(--suit-color);
+    border-radius: 2px;
+    opacity: 0.18;
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* ── Ace: oversized pip with ornate ring ── */
+.card-ace-center {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 2;
+    pointer-events: none;
+}
+.card-ace-ring {
+    position: absolute;
+    width: 85%; height: 85%;
+    border-radius: 50%;
+    border: 1.5px solid var(--suit-color);
+    opacity: 0.18;
+}
+.card-ace-pip {
+    font-size: 4.5rem;
+    color: var(--suit-color);
+    line-height: 1;
+    user-select: none;
+    filter: drop-shadow(0 2px 6px rgba(0,0,0,0.15));
+}
+.player-cards .card-ace-pip   { font-size: 4.5rem; }
+#community-cards .card-ace-pip { font-size: 8rem; }
+
+/* ── Court card portrait panel (K/Q/J) ── */
+.card-court-panel {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 60%; height: 64%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1%;
+    border-radius: 3px;
+    z-index: 2;
+    overflow: hidden;
+    pointer-events: none;
+}
+.card-court-panel::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: var(--suit-color);
+    opacity: 0.07;
+}
+.card-court-panel::after {
+    content: '';
+    position: absolute; inset: 0;
+    border: 1.5px solid var(--suit-color);
+    opacity: 0.28;
+    border-radius: 3px;
+}
+.card-court-fig {
+    position: relative; z-index: 3;
+    font-size: 3.2rem;
+    line-height: 1;
+    color: var(--suit-color);
+    user-select: none;
+}
+.player-cards .card-court-fig   { font-size: 3.2rem; }
+#community-cards .card-court-fig { font-size: 6rem; }
+
+.card-court-suit {
+    position: relative; z-index: 3;
+    font-size: 0.95rem;
+    color: var(--suit-color);
+    opacity: 0.5;
+    line-height: 1;
+    user-select: none;
+}
+.player-cards .card-court-suit   { font-size: 0.95rem; }
+#community-cards .card-court-suit { font-size: 1.7rem; }
+
+.card-court-ltr {
+    position: relative; z-index: 3;
+    font-size: 0.65rem;
+    font-weight: 900;
+    color: var(--suit-color);
+    opacity: 0.38;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    font-family: 'Georgia', serif;
+    line-height: 1;
+    user-select: none;
+}
+.player-cards .card-court-ltr   { font-size: 0.65rem; }
+#community-cards .card-court-ltr { font-size: 1.1rem; }
+
 /* ====== HAND HISTORY INLINE ====== */
 .hh-inline {
     display: flex;
@@ -1183,6 +1286,12 @@ html, body {
 .hh-row-cards .card-corner-tr  { top: 2px;    right: 2px; }
 .hh-row-cards .card-corner-bl  { bottom: 2px; left: 2px;  }
 .hh-row-cards .card-corner-br  { bottom: 2px; right: 2px; }
+/* History cards — suppress decorative elements at 30×42px */
+.hh-row-cards .card-inner-frame  { display: none; }
+.hh-row-cards .card-ace-pip      { font-size: 0.85rem; }
+.hh-row-cards .card-court-fig    { font-size: 0.75rem; }
+.hh-row-cards .card-court-suit   { display: none; }
+.hh-row-cards .card-court-ltr    { display: none; }
 
 .hh-no-history {
     font-size: 0.65rem;
@@ -1236,10 +1345,18 @@ html, body {
     .player-cards .card-rank       { font-size: 1.1rem; }
     .player-cards .card-suit       { font-size: 0.85rem; }
     .player-cards .card-center-pip { font-size: 2.2rem; }
+    .player-cards .card-ace-pip    { font-size: 3.5rem; }
+    .player-cards .card-court-fig  { font-size: 2.5rem; }
+    .player-cards .card-court-suit { font-size: 0.75rem; }
+    .player-cards .card-court-ltr  { font-size: 0.55rem; }
     #community-cards .card { width: 120px; height: 168px; border-radius: 10px; }
     #community-cards .card-rank { font-size: 1.6rem; }
     #community-cards .card-suit { font-size: 1.3rem; }
     #community-cards .card-center-pip { font-size: 4rem; }
+    #community-cards .card-ace-pip    { font-size: 5.2rem; }
+    #community-cards .card-court-fig  { font-size: 3.8rem; }
+    #community-cards .card-court-suit { font-size: 1.1rem; }
+    #community-cards .card-court-ltr  { font-size: 0.75rem; }
     #community-cards .card-corner-tl { top: 6px;    left: 6px;  }
     #community-cards .card-corner-tr { top: 6px;    right: 6px; }
     #community-cards .card-corner-bl { bottom: 6px; left: 6px;  }
@@ -1257,10 +1374,18 @@ html, body {
     .player-cards .card-rank       { font-size: 1.8rem; }
     .player-cards .card-suit       { font-size: 1.4rem; }
     .player-cards .card-center-pip { font-size: 3.8rem; }
+    .player-cards .card-ace-pip    { font-size: 5.5rem; }
+    .player-cards .card-court-fig  { font-size: 4rem; }
+    .player-cards .card-court-suit { font-size: 1.2rem; }
+    .player-cards .card-court-ltr  { font-size: 0.8rem; }
     #community-cards .card { width: 220px; height: 308px; border-radius: 16px; }
     #community-cards .card-rank { font-size: 2.8rem; }
     #community-cards .card-suit { font-size: 2.2rem; }
     #community-cards .card-center-pip { font-size: 8rem; }
+    #community-cards .card-ace-pip    { font-size: 10rem; }
+    #community-cards .card-court-fig  { font-size: 7.5rem; }
+    #community-cards .card-court-suit { font-size: 2.2rem; }
+    #community-cards .card-court-ltr  { font-size: 1.4rem; }
     #community-cards .card-corner-tl { top: 10px;    left: 10px;  }
     #community-cards .card-corner-tr { top: 10px;    right: 10px; }
     #community-cards .card-corner-bl { bottom: 10px; left: 10px;  }
@@ -1954,3 +2079,9 @@ html, body {
 #hand-rank-sheet .card-corner-tr  { top: 1px;    right: 1px; }
 #hand-rank-sheet .card-corner-bl  { bottom: 1px; left: 1px;  }
 #hand-rank-sheet .card-corner-br  { bottom: 1px; right: 1px; }
+/* Hand rank sheet — suppress decorative elements at 22×31px */
+#hand-rank-sheet .card-inner-frame { display: none; }
+#hand-rank-sheet .card-ace-pip     { font-size: 0.6rem; }
+#hand-rank-sheet .card-court-fig   { font-size: 0.55rem; }
+#hand-rank-sheet .card-court-suit  { display: none; }
+#hand-rank-sheet .card-court-ltr   { display: none; }

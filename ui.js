@@ -983,12 +983,36 @@ const UI = (() => {
         const suit     = CONSTANTS.SUITS[card.suit];
         const symbol   = CONSTANTS.RANK_SYMBOLS[card.rank];
         const suitChar = CONSTANTS.SUIT_SYMBOLS[suit];
-        // Large-print 4-colour: index in all 4 corners + centered pip
+        const rank     = card.rank;
+
+        // 4-corner jumbo index (unchanged)
         const index = `<span class="card-rank">${symbol}</span><span class="card-suit">${suitChar}</span>`;
+
+        let centerHtml;
+        if (rank === 14) {
+            // Ace — oversized single pip with inner ornate ring
+            centerHtml = `<div class="card-ace-center">
+                <div class="card-ace-ring"></div>
+                <span class="card-ace-pip">${suitChar}</span>
+            </div>`;
+        } else if (rank >= 11) {
+            // King ♚ / Queen ♛ / Jack ♞ — court portrait
+            const fig  = rank === 13 ? '&#9818;' : rank === 12 ? '&#9819;' : '&#9822;';
+            const ltr  = rank === 13 ? 'K' : rank === 12 ? 'Q' : 'J';
+            centerHtml = `<div class="card-court-panel">
+                <span class="card-court-fig">${fig}</span>
+                <span class="card-court-suit">${suitChar}</span>
+                <span class="card-court-ltr">${ltr}</span>
+            </div>`;
+        } else {
+            centerHtml = `<div class="card-center-pip">${suitChar}</div>`;
+        }
+
         return `<div class="card card-face ${suit}">
+            <div class="card-inner-frame"></div>
             <div class="card-corner card-corner-tl">${index}</div>
             <div class="card-corner card-corner-tr">${index}</div>
-            <div class="card-center-pip">${suitChar}</div>
+            ${centerHtml}
             <div class="card-corner card-corner-bl">${index}</div>
             <div class="card-corner card-corner-br">${index}</div>
         </div>`;
