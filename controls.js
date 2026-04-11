@@ -18,8 +18,9 @@ const Controls = (() => {
         numPlayers = n;
         keyLookup = {};
         for (let p = 0; p < n; p++) {
-            for (let k = 0; k < 5; k++) {
-                keyLookup[KEY_MAP[p][k]] = { player: p, keyIndex: k };
+            const row = KEY_MAP[p] || []; // guard: playerCount > KEY_MAP.length would crash without this
+            for (let k = 0; k < row.length; k++) {
+                keyLookup[row[k]] = { player: p, keyIndex: k };
             }
         }
     }
