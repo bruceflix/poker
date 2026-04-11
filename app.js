@@ -297,7 +297,7 @@ const App = (() => {
 
         if (aiTimer !== null) return; // already scheduled
 
-        const delay = 600 + Math.random() * 900; // 600–1500 ms — feels natural
+        const delay = 1600 + Math.random() * 900; // 1600–2500 ms
         aiTimer = setTimeout(() => {
             aiTimer = null;
             executeAIAction(pi);
@@ -362,6 +362,8 @@ const App = (() => {
             else                           action = 'fold';
         }
 
+        // Never fold when a free check is available
+        if (action === 'fold' && canCheck) action = 'check';
         // Sanity: cannot check if there's a bet to call
         if (action === 'check' && !canCheck) action = 'call';
 
