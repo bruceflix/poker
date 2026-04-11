@@ -136,15 +136,15 @@ const HandEvaluator = (() => {
         const type = score[0];
         switch (type) {
             case 9: return 'Royal Flush';
-            case 8: return `Straight Flush, ${rankNames[score[1]]}-high`;
-            case 7: return `Four of a Kind, ${pluralRank[score[1]]}`;
-            case 6: return `Full House, ${pluralRank[score[1]]} over ${pluralRank[score[2]]}`;
-            case 5: return `Flush, ${rankNames[score[1]]}-high`;
-            case 4: return `Straight, ${rankNames[score[1]]}-high`;
-            case 3: return `Three of a Kind, ${pluralRank[score[1]]}`;
-            case 2: return `Two Pair, ${pluralRank[score[1]]} and ${pluralRank[score[2]]}`;
-            case 1: return `Pair of ${pluralRank[score[1]]}`;
-            case 0: return `${rankNames[score[1]]}-high`;
+            case 8: return `Straight Flush, ${rankNames[score[1]] || '?'}-high`;
+            case 7: return `Four of a Kind, ${pluralRank[score[1]] || '?'}`;
+            case 6: return `Full House, ${pluralRank[score[1]] || '?'} over ${pluralRank[score[2]] || '?'}`;
+            case 5: return `Flush, ${rankNames[score[1]] || '?'}-high`;
+            case 4: return `Straight, ${rankNames[score[1]] || '?'}-high`;
+            case 3: return `Three of a Kind, ${pluralRank[score[1]] || '?'}`;
+            case 2: return `Two Pair, ${pluralRank[score[1]] || '?'} and ${pluralRank[score[2]] || '?'}`;
+            case 1: return `Pair of ${pluralRank[score[1]] || '?'}`;
+            case 0: return `${rankNames[score[1]] || '?'}-high`;
             default: return 'Unknown';
         }
     }
