@@ -221,15 +221,21 @@ const UI = (() => {
 
         function renderNameInputs() {
             const div = document.getElementById('playerNameInputs');
+            // Preserve values across re-renders (e.g. player count change)
+            const prevNames = Array.from(div.querySelectorAll('.player-name-input')).map(el => el.value);
+            const prevAI    = Array.from(div.querySelectorAll('.player-ai-check')).map(el => el.checked);
             div.innerHTML = '';
             for (let i = 0; i < playerCount; i++) {
                 const row = document.createElement('div');
                 row.className = 'name-input-row';
-                const keyHint = CONSTANTS.KEY_MAP[i].join(' ').toUpperCase();
+                const keyHint  = CONSTANTS.KEY_MAP[i].join(' ').toUpperCase();
+                const nameVal  = prevNames[i] !== undefined ? prevNames[i] : `Player ${i+1}`;
+                const aiChecked = prevAI[i] ? ' checked' : '';
                 row.innerHTML = `
                     <span class="seat-num">P${i+1}</span>
                     <input type="text" class="player-name-input" data-index="${i}"
-                           placeholder="Player ${i+1}" maxlength="12" value="Player ${i+1}">
+                           placeholder="Player ${i+1}" maxlength="12" value="${escHtml(nameVal)}">
+                    <label class="ai-label"><input type="checkbox" class="player-ai-check" data-index="${i}"${aiChecked}> AI</label>
                     <span class="key-hint">Keys: ${keyHint}</span>
                 `;
                 div.appendChild(row);
@@ -305,18 +311,23 @@ const UI = (() => {
         renderNameInputs();
 
         document.getElementById('startGameBtn')?.addEventListener('click', () => {
-            const inputs = container.querySelectorAll('.player-name-input');
-            let names = Array.from(inputs).map(inp => inp.value.trim() || `Player ${parseInt(inp.dataset.index)+1}`);
+            const inputs   = container.querySelectorAll('.player-name-input');
+            const aiChecks = container.querySelectorAll('.player-ai-check');
+            let players = Array.from(inputs).map((inp, idx) => ({
+                name: inp.value.trim() || `Player ${parseInt(inp.dataset.index)+1}`,
+                isAI: aiChecks[idx] ? aiChecks[idx].checked : false,
+            }));
 
             if (seatMode === 'random') {
-                for (let i = names.length - 1; i > 0; i--) {
+                for (let i = players.length - 1; i > 0; i--) {
                     const j = Math.floor(Math.random() * (i + 1));
-                    [names[i], names[j]] = [names[j], names[i]];
+                    [players[i], players[j]] = [players[j], players[i]];
                 }
             }
 
             onStart({
-                playerNames: names,
+                playerNames: players.map(p => p.name),
+                isAI:        players.map(p => p.isAI),
                 startingChips,
                 blindPreset,
                 bgIndex: currentBgIndex,
@@ -370,6 +381,7 @@ const UI = (() => {
                 </div>
                 <div id="player-sections"></div>
                 <div id="winner-overlay" class="hidden"></div>
+                <div id="hand-rank-sheet" class="hidden"></div>
             </div>
             <div id="settings-overlay" class="overlay hidden"></div>
         `;
@@ -404,9 +416,10 @@ const UI = (() => {
     }
 
     function buildPlayerHTML(p, i) {
+        const turnText = p.isAI ? '&#129302; AI TURN' : '&#9658; YOUR TURN';
         return `
             <div class="player-bet-label" id="bet-${i}"></div>
-            <div class="your-turn-indicator hidden" id="turn-${i}">&#9658; YOUR TURN</div>
+            <div class="your-turn-indicator hidden" id="turn-${i}">${turnText}</div>
             <div class="player-header">
                 <div class="player-name">${escHtml(p.name)}</div>
                 <div class="player-badge" id="badge-${i}"></div>
@@ -484,6 +497,20 @@ const UI = (() => {
         const sd = document.getElementById('showdown-info');
         if (sd && state.phase !== 'gameOver') sd.classList.add('hidden');
         updateLastHandDisplay(state);
+
+        // Hand rank reference sheet — visible whenever a player's history panel is open
+        const hrSheet = document.getElementById('hand-rank-sheet');
+        if (hrSheet) {
+            if (historyOpenFor !== -1) {
+                if (hrSheet.classList.contains('hidden')) {
+                    hrSheet.innerHTML = buildHandRankSheet();
+                }
+                hrSheet.classList.remove('hidden');
+            } else {
+                hrSheet.classList.add('hidden');
+            }
+        }
+
         scheduleReposition();
     }
 
@@ -686,6 +713,7 @@ const UI = (() => {
             const active = Game.activePlayers();
             const isHeadsUp = active.length === 2;
             let badges = [];
+            if (p.isAI) badges.push('AI');
             if (state.dealerIndex === i) badges.push('D');
             let sbIdx, bbIdx;
             if (isHeadsUp) {
@@ -783,16 +811,22 @@ const UI = (() => {
                         : '<span class="ack-prompt">Press any key to continue</span>';
                 }
             } else if (isActive) {
-                const labels = Controls.getKeyLabels(i);
-                const keys = Controls.getKeyMap(i);
-                keysEl.innerHTML = labels.map((label, k) =>
-                    `<span class="key-label"><kbd>${keys[k].toUpperCase()}</kbd><span class="key-action">${label}</span></span>`
-                ).join('');
-            } else {
+                if (p.isAI) {
+                    keysEl.innerHTML = '<span class="ai-thinking">&#129302; Thinking\u2026</span>';
+                } else {
+                    const labels = Controls.getKeyLabels(i);
+                    const keys = Controls.getKeyMap(i);
+                    keysEl.innerHTML = labels.map((label, k) =>
+                        `<span class="key-label"><kbd>${keys[k].toUpperCase()}</kbd><span class="key-action">${label}</span></span>`
+                    ).join('');
+                }
+            } else if (!p.isAI) {
                 const keys = Controls.getKeyMap(i);
                 keysEl.innerHTML =
                     `<span class="key-label peek-only"><kbd>${keys[0].toUpperCase()}</kbd><span class="key-action">PEEK</span></span>` +
                     `<span class="key-label peek-only"><kbd>${keys[1].toUpperCase()}</kbd><span class="key-action">HISTORY</span></span>`;
+            } else {
+                keysEl.innerHTML = ''; // AI players have no keyboard controls
             }
         }
 
@@ -1243,6 +1277,38 @@ const UI = (() => {
                 fly.remove();
             }, 340);
         });
+    }
+
+    // ---- HAND RANKING REFERENCE SHEET ----
+    // Shown as a fixed side panel whenever a player's hand history is open.
+    // suit indices: 0=hearts(red), 1=diamonds(red), 2=clubs(dark), 3=spades(dark)
+    function buildHandRankSheet() {
+        const HANDS = [
+            { rank:  1, name: 'Royal Flush',     desc: 'A K Q J 10, same suit',   cards: [{r:14,s:3},{r:13,s:3},{r:12,s:3},{r:11,s:3},{r:10,s:3}] },
+            { rank:  2, name: 'Straight Flush',  desc: 'Five in a row, same suit', cards: [{r:9,s:0},{r:8,s:0},{r:7,s:0},{r:6,s:0},{r:5,s:0}] },
+            { rank:  3, name: 'Four of a Kind',  desc: 'Four matching ranks',      cards: [{r:14,s:0},{r:14,s:1},{r:14,s:2},{r:14,s:3},{r:13,s:3}] },
+            { rank:  4, name: 'Full House',      desc: 'Three + a pair',           cards: [{r:13,s:0},{r:13,s:2},{r:13,s:3},{r:12,s:0},{r:12,s:1}] },
+            { rank:  5, name: 'Flush',           desc: 'Five cards, same suit',    cards: [{r:14,s:1},{r:11,s:1},{r:9,s:1},{r:4,s:1},{r:2,s:1}] },
+            { rank:  6, name: 'Straight',        desc: 'Five in a row, any suits', cards: [{r:10,s:3},{r:9,s:0},{r:8,s:1},{r:7,s:2},{r:6,s:3}] },
+            { rank:  7, name: 'Three of a Kind', desc: 'Three matching ranks',     cards: [{r:8,s:0},{r:8,s:2},{r:8,s:3},{r:14,s:1},{r:13,s:3}] },
+            { rank:  8, name: 'Two Pair',        desc: 'Two different pairs',      cards: [{r:14,s:0},{r:14,s:3},{r:13,s:1},{r:13,s:2},{r:9,s:3}] },
+            { rank:  9, name: 'One Pair',        desc: 'Two matching ranks',       cards: [{r:11,s:0},{r:11,s:3},{r:14,s:1},{r:13,s:2},{r:12,s:3}] },
+            { rank: 10, name: 'High Card',       desc: 'Best single card wins',   cards: [{r:14,s:3},{r:13,s:0},{r:11,s:1},{r:8,s:2},{r:3,s:3}] },
+        ];
+        const rows = HANDS.map(h => {
+            const cardsHtml = h.cards.map(c => renderCard({ rank: c.r, suit: c.s }, true)).join('');
+            return `<div class="hr-row">
+                <div class="hr-info">
+                    <span class="hr-rank-num">${h.rank}</span>
+                    <div class="hr-text">
+                        <div class="hr-name">${h.name}</div>
+                        <div class="hr-desc">${h.desc}</div>
+                    </div>
+                </div>
+                <div class="hr-cards">${cardsHtml}</div>
+            </div>`;
+        }).join('');
+        return `<div class="hr-title">&#9824; Hand Rankings <span class="hr-subtitle">(best \u2192 worst)</span></div>${rows}`;
     }
 
     return {

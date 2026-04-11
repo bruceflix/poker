@@ -6,9 +6,13 @@ const App = (() => {
 
     // Acknowledgment tracking — all non-eliminated players must press a key
     // after each hand before the next deal begins.
-    let ackedPlayers   = new Set();
+    let ackedPlayers    = new Set();
     let ackedHandNumber = -1;
-    let playersToAck   = [];
+    let playersToAck    = [];
+
+    // AI turn scheduling
+    let aiTimer        = null;  // pending setTimeout handle
+    let aiAckScheduled = new Set(); // seat indices for which an auto-ACK is already queued
 
     function getAckInfo() {
         return playersToAck.length
@@ -155,7 +159,9 @@ const App = (() => {
     }
 
     function dealNextHand() {
-        handInProgress = true;
+        if (aiTimer !== null) { clearTimeout(aiTimer); aiTimer = null; }
+        aiAckScheduled  = new Set();
+        handInProgress  = true;
         ackedPlayers    = new Set();
         ackedHandNumber = -1;
         playersToAck    = [];
@@ -184,6 +190,16 @@ const App = (() => {
                 .map((p, i) => ({ p, i }))
                 .filter(({ p }) => !p.eliminated)
                 .map(({ i }) => i);
+
+            // Auto-ACK for AI players — schedule once per hand per seat
+            for (const pi of playersToAck) {
+                const p = state.players[pi];
+                if (p && p.isAI && !aiAckScheduled.has(pi)) {
+                    aiAckScheduled.add(pi);
+                    const delay = 1200 + Math.random() * 800;
+                    setTimeout(() => onPlayerAction(pi, 'ack', null), delay);
+                }
+            }
         }
 
         if (state.blindLevel !== lastBlindLevel) {
@@ -192,6 +208,7 @@ const App = (() => {
         }
 
         UI.updateTable(state, getAckInfo());
+        scheduleAITurn();
     }
 
     function finishAndAdvance() {
@@ -259,6 +276,117 @@ const App = (() => {
         }
 
         UI.updateTable(Game.getState(), getAckInfo());
+    }
+
+    // ---- AI ENGINE ----
+
+    // Schedule an AI action for the current active player if it's an AI seat.
+    // Guards against double-scheduling: if aiTimer is already set, do nothing.
+    function scheduleAITurn() {
+        const state = Game.getState();
+        if (!state || state.paused) return;
+
+        const bettingPhases = ['preflop', 'flop', 'turn', 'river'];
+        if (!bettingPhases.includes(state.phase)) return;
+
+        const pi = state.activePlayerIndex;
+        if (pi < 0) return;
+
+        const p = state.players[pi];
+        if (!p || !p.isAI || p.eliminated || p.folded || p.allIn) return;
+
+        if (aiTimer !== null) return; // already scheduled
+
+        const delay = 600 + Math.random() * 900; // 600–1500 ms — feels natural
+        aiTimer = setTimeout(() => {
+            aiTimer = null;
+            executeAIAction(pi);
+        }, delay);
+    }
+
+    // Execute one action for an AI player.
+    // Evaluates hand strength and picks a weighted-random action.
+    function executeAIAction(playerIndex) {
+        const state = Game.getState();
+        if (!state || state.paused) return;
+        if (state.activePlayerIndex !== playerIndex) return;
+
+        const bettingPhases = ['preflop', 'flop', 'turn', 'river'];
+        if (!bettingPhases.includes(state.phase)) return;
+
+        const p = state.players[playerIndex];
+        if (!p || !p.isAI || p.eliminated || p.folded || p.allIn) return;
+
+        // --- Hand strength: 0=weak 1=medium 2=strong ---
+        const allCards = [...p.cards, ...state.communityCards];
+        let strength = 1;
+
+        if (allCards.length >= 5) {
+            try {
+                const result   = HandEvaluator.evaluate(allCards);
+                const handType = result.score[0]; // 0=high card … 9=royal flush
+                if      (handType >= 6) strength = 2; // full house or better
+                else if (handType >= 3) strength = 1; // trips / straight / flush
+                else                    strength = 0; // high card / pair / two pair
+            } catch (e) { strength = 1; }
+        } else if (p.cards.length >= 2) {
+            const [c1, c2] = p.cards;
+            const hi      = Math.max(c1.rank, c2.rank);
+            const isPair  = c1.rank === c2.rank;
+            const suited  = c1.suit === c2.suit;
+            if      (isPair && hi >= 10)                    strength = 2; // high pocket pair
+            else if (isPair || hi >= 13 || (hi >= 11 && suited)) strength = 1; // decent holding
+            else                                             strength = 0; // rags
+        }
+
+        // --- Weighted action choice ---
+        const r        = Math.random();
+        const canCheck = state.currentBet <= p.bet;
+        const canRaise = p.chips > (state.currentBet - p.bet);
+
+        let action;
+        if (strength === 2) {
+            // Strong: raise 50%, check/call 45%, fold 5%
+            if      (r < 0.50 && canRaise) action = 'raise';
+            else if (r < 0.95)             action = canCheck ? 'check' : 'call';
+            else                           action = 'fold';
+        } else if (strength === 1) {
+            // Medium: check/call 75%, raise 15%, fold 10%
+            if      (r < 0.15 && canRaise) action = 'raise';
+            else if (r < 0.90)             action = canCheck ? 'check' : 'call';
+            else                           action = 'fold';
+        } else {
+            // Weak: fold 50%, check/call 45%, raise 5%
+            if      (r < 0.05 && canRaise) action = 'raise';
+            else if (r < 0.55)             action = canCheck ? 'check' : 'call';
+            else                           action = 'fold';
+        }
+
+        // Sanity: cannot check if there's a bet to call
+        if (action === 'check' && !canCheck) action = 'call';
+
+        // --- Execute ---
+        if (action === 'raise') {
+            const minR   = Game.getMinRaise();
+            const maxR   = Game.getMaxRaise(playerIndex);
+            const bb     = Game.bigBlind();
+            let betAmt;
+            if (strength === 2 && Math.random() < 0.2) {
+                betAmt = maxR; // occasional shove with a monster
+            } else {
+                const mult = 2 + Math.floor(Math.random() * 3); // 2×–4× over min-raise
+                betAmt = Math.min(maxR, minR + (mult - 1) * bb);
+                betAmt = Math.max(minR, betAmt);
+            }
+            // Call Game.raise directly — notify() fires → onStateUpdate → UI.updateTable → scheduleAITurn chains
+            Game.raise(playerIndex, betAmt);
+        } else if (action === 'call') {
+            Game.call(playerIndex);
+        } else if (action === 'check') {
+            Game.check(playerIndex);
+        } else {
+            Game.fold(playerIndex);
+        }
     }
 
     return { start, togglePause };

@@ -45,6 +45,7 @@ const Game = (() => {
         state = {
             players: playerNames.map((name, i) => ({
                 name,
+                isAI: !!(config.isAI && config.isAI[i]),
                 chips: startingChips,
                 cards: [],
                 folded: false,
