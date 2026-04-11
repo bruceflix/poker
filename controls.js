@@ -13,8 +13,9 @@ const Controls = (() => {
     // Reverse lookup: key string -> { player, keyIndex }
     let keyLookup = {};
 
-    // Guard against duplicate event listeners from multiple init() calls
+    // Listeners are added exactly once (lazily). initialized gates all handler logic.
     let initialized = false;
+    let listenersAttached = false;
 
     function buildLookup(n) {
         numPlayers = n;
@@ -28,24 +29,25 @@ const Controls = (() => {
     }
 
     function init(playerCount, actionCallback) {
-        // Always destroy first so re-initialisation never stacks listeners
-        destroy();
-
         onAction = actionCallback;
         buildLookup(playerCount);
-        document.addEventListener('keydown', handleKeyDown);
-        document.addEventListener('keyup', handleKeyUp);
+        // Attach listeners exactly once — handlers check `initialized` internally
+        if (!listenersAttached) {
+            document.addEventListener('keydown', handleKeyDown);
+            document.addEventListener('keyup', handleKeyUp);
+            listenersAttached = true;
+        }
         initialized = true;
     }
 
     function destroy() {
-        document.removeEventListener('keydown', handleKeyDown);
-        document.removeEventListener('keyup', handleKeyUp);
         peekingPlayers.clear();
         initialized = false;
+        // Listeners stay attached but are now gated off by initialized = false
     }
 
     function handleKeyDown(e) {
+        if (!initialized) return;
         // Don't capture if typing in an input
         if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
 
@@ -141,6 +143,7 @@ const Controls = (() => {
     }
 
     function handleKeyUp(e) {
+        if (!initialized) return;
         // Defensive: e.key can be null/undefined in some browser edge cases
         if (!e.key) return;
         const key = e.key.toLowerCase();
