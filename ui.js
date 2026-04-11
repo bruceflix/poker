@@ -209,8 +209,20 @@ const UI = (() => {
                             <button class="seat-btn" data-seat="manual">As Entered</button>
                         </div>
                     </div>
+
+                    <div class="config-section">
+                        <label>Buy-in per Player</label>
+                        <div class="buyin-row">
+                            ${[5,10,20,50].map(v =>
+                                `<button class="buyin-btn ${v===10?'active':''}" data-buyin="${v}">&pound;${v}</button>`
+                            ).join('')}
+                            <input type="number" id="customBuyin" placeholder="Custom" min="1" step="1">
+                        </div>
+                    </div>
                 </div>
             </div>
+
+            <div id="prizeBreakdown" class="prize-breakdown"></div>
 
             <button id="startGameBtn" class="start-btn">DEAL 'EM!</button>
         `;
@@ -220,7 +232,39 @@ const UI = (() => {
         let startingChips = 5000;
         let blindPreset = 'standard';
         let seatMode = 'random';
+        let buyIn = 10;
         currentBgIndex = 0;
+
+        function calcPrizes(pool, count) {
+            // Tiers: 1st=50%, 2nd=25%, 3rd=15%, 4th=10%. Only pay places that exist.
+            const rawPcts = [0.50, 0.25, 0.15, 0.10];
+            const places  = Math.min(count, rawPcts.length);
+            // Floor each to nearest 5, then distribute remainder to higher places
+            let amounts = rawPcts.slice(0, places).map(pct => Math.floor(pool * pct / 5) * 5);
+            let leftover = pool - amounts.reduce((s, a) => s + a, 0);
+            for (let i = 0; i < amounts.length && leftover >= 5; i++) {
+                amounts[i] += 5;
+                leftover   -= 5;
+            }
+            // Any sub-5 remainder (pool not divisible by 5) goes to 1st
+            if (leftover > 0) amounts[0] += leftover;
+            return amounts;
+        }
+
+        function renderPrizes() {
+            const el = document.getElementById('prizeBreakdown');
+            if (!el) return;
+            const pool   = buyIn * playerCount;
+            const prizes = calcPrizes(pool, playerCount);
+            const labels = ['1st', '2nd', '3rd', '4th'];
+            const rows   = prizes.map((amt, i) =>
+                `<div class="pz-row"><span class="pz-place">${labels[i]}</span><span class="pz-amt">&pound;${amt.toLocaleString()}</span></div>`
+            ).join('');
+            const none = playerCount > prizes.length
+                ? `<div class="pz-row pz-none"><span class="pz-place">${prizes.length + 1}${prizes.length + 1 < playerCount ? '–' + playerCount : ''}${prizes.length + 1 < playerCount ? 'th' : ''}</span><span class="pz-amt">–</span></div>`
+                : '';
+            el.innerHTML = `<div class="pz-header">Prize Pool &mdash; <span class="pz-pool">&pound;${pool.toLocaleString()}</span> (${playerCount} &times; &pound;${buyIn})</div><div class="pz-rows">${rows}${none}</div>`;
+        }
 
         function renderNameInputs() {
             const div = document.getElementById('playerNameInputs');
@@ -251,6 +295,7 @@ const UI = (() => {
                 btn.classList.add('active');
                 playerCount = parseInt(btn.dataset.count);
                 renderNameInputs();
+                renderPrizes();
             });
         });
 
@@ -294,6 +339,24 @@ const UI = (() => {
             });
         });
 
+        container.querySelectorAll('.buyin-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                container.querySelectorAll('.buyin-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                buyIn = parseInt(btn.dataset.buyin);
+                const customEl = document.getElementById('customBuyin');
+                if (customEl) customEl.value = '';
+                renderPrizes();
+            });
+        });
+        document.getElementById('customBuyin')?.addEventListener('input', (e) => {
+            if (e.target.value) {
+                container.querySelectorAll('.buyin-btn').forEach(b => b.classList.remove('active'));
+                buyIn = parseInt(e.target.value) || 10;
+                renderPrizes();
+            }
+        });
+
         // Load saved game buttons
         container.querySelectorAll('.save-load-btn').forEach(btn => {
             btn.addEventListener('click', () => {
@@ -312,6 +375,7 @@ const UI = (() => {
         });
 
         renderNameInputs();
+        renderPrizes();
 
         document.getElementById('startGameBtn')?.addEventListener('click', () => {
             const inputs   = container.querySelectorAll('.player-name-input');

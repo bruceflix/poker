@@ -212,6 +212,102 @@ html, body {
     box-shadow: 0 0 0 2px rgba(201,162,39,0.15);
 }
 
+/* Buy-in row shares styling with chip-row */
+.buyin-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.buyin-btn {
+    padding: 10px 16px;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 8px;
+    background: rgba(255,255,255,0.04);
+    color: #aaa;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.18s;
+}
+.buyin-btn:hover {
+    border-color: rgba(201,162,39,0.5);
+    color: #fff;
+    background: rgba(201,162,39,0.07);
+}
+.buyin-btn.active {
+    border-color: #c9a227;
+    background: rgba(201,162,39,0.18);
+    color: #f5d060;
+    box-shadow: 0 0 12px rgba(201,162,39,0.25), inset 0 0 6px rgba(201,162,39,0.08);
+}
+#customBuyin {
+    padding: 10px 14px;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 8px;
+    background: rgba(255,255,255,0.04);
+    color: #fff;
+    font-size: 0.9rem;
+    width: 90px;
+}
+#customBuyin:focus {
+    border-color: #c9a227;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(201,162,39,0.15);
+}
+
+/* Prize breakdown panel */
+.prize-breakdown {
+    margin: 0 52px 22px;
+    border: 1px solid rgba(201,162,39,0.2);
+    border-radius: 10px;
+    background: rgba(201,162,39,0.05);
+    padding: 16px 20px;
+}
+.pz-header {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #c9a227;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 12px;
+    border-bottom: 1px solid rgba(201,162,39,0.15);
+    padding-bottom: 8px;
+}
+.pz-pool {
+    color: #f5d060;
+}
+.pz-rows {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.pz-row {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px;
+    padding: 8px 14px;
+    min-width: 60px;
+}
+.pz-place {
+    font-size: 0.65rem;
+    color: #888;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+}
+.pz-amt {
+    font-size: 1.05rem;
+    color: #fff;
+    font-weight: 700;
+}
+.pz-row:first-child .pz-amt { color: #f5d060; }
+.pz-row:nth-child(2) .pz-amt { color: #c0c0c0; }
+.pz-row:nth-child(3) .pz-amt { color: #cd7f32; }
+.pz-none .pz-amt { color: #555; }
+
 #playerNameInputs {
     display: flex;
     flex-direction: column;
