@@ -11,7 +11,9 @@ const App = (() => {
     let playersToAck   = [];
 
     function getAckInfo() {
-        return playersToAck.length ? { ackedPlayers, playersToAck } : null;
+        return playersToAck.length
+            ? { ackedPlayers: new Set(ackedPlayers), playersToAck: [...playersToAck] }
+            : null;
     }
 
     function start() {
