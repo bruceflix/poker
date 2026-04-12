@@ -665,7 +665,7 @@ html, body {
 .player-section {
     position: absolute;
     width: 420px;
-    padding: 10px 14px;
+    padding: 10px 14px 6px;
     border-radius: 12px;
     background: rgba(0,0,0,0.45);
     border: 2px solid rgba(255,255,255,0.1);
@@ -705,7 +705,7 @@ html, body {
 /* Keys area always holds its full-keyboard height — prevents growth when
    a player becomes active and buttons appear. */
 .player-keys {
-    min-height: 52px;
+    min-height: 42px;
 }
 
 .player-section.active-player {
@@ -1021,18 +1021,18 @@ html, body {
     flex-wrap: nowrap;
     gap: 4px;
     justify-content: center;
-    margin-top: 4px;
+    margin-top: 2px;
 }
 
 .key-label {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 3px;
+    gap: 2px;
     background: rgba(255,255,255,0.07);
     border: 1px solid rgba(255,255,255,0.18);
     border-radius: 6px;
-    padding: 5px 6px 4px;
+    padding: 3px 6px 2px;
     min-width: 52px;
     flex: 1;
     white-space: nowrap;
@@ -1197,7 +1197,7 @@ html, body {
     .player-section { width: 320px; padding: 7px 10px; }
     .player-cards .card   { width: 80px;  height: 116px; }
     .player-cards { min-height: 116px; }
-    .player-keys  { min-height: 44px; }
+    .player-keys  { min-height: 36px; }
     #community-cards .card { width: 120px; height: 168px; border-radius: 10px; }
     .pot-total { font-size: 1.4rem; }
     .chip-coin { width: 54px; height: 21px; }
@@ -1212,7 +1212,7 @@ html, body {
     .player-section { width: 460px; padding: 14px 18px; }
     .player-cards .card   { width: 130px; height: 190px; }
     .player-cards { min-height: 190px; }
-    .player-keys  { min-height: 64px; }
+    .player-keys  { min-height: 52px; }
     #community-cards .card { width: 220px; height: 308px; border-radius: 16px; }
     .player-name { font-size: 1.5rem; }
     .pot-total { font-size: 2.4rem; }
