@@ -158,8 +158,8 @@ const Audio = (() => {
             play(rnd('collide3','collide4'), 0.95);
             play(rnd('collide1','collide2'), 0.7, 140);
             play(rnd('stack5','stack6'), 0.6, 280);
-            // Voice callout
-            speak('All in!', { pitch: 0.7, rate: 0.82, volume: 1.0 });
+            // Voice callout — delayed 2s so chip sounds settle first
+            setTimeout(() => speak('All in!', { pitch: 0.7, rate: 0.82, volume: 1.0 }), 2000);
         },
 
         win() {
