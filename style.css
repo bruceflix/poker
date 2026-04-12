@@ -830,14 +830,14 @@ html, body {
 /* Absolute-positioned coin container — grows upward */
 .chip-coins {
     position: relative;
-    width: 54px;
+    width: 66px;
 }
 
 /* One chip disc — ellipse face viewed from slight angle above */
 .chip-coin {
     position: absolute;
-    width: 54px;
-    height: 18px;
+    width: 66px;
+    height: 26px;
     border-radius: 50%;
     left: 0;
     /* box-shadow (side edge + drop) set inline per denomination */
@@ -847,7 +847,7 @@ html, body {
 .chip-coin::before {
     content: '';
     position: absolute;
-    inset: 2px 7px;
+    inset: 3px 9px;
     border-radius: 50%;
     border: 1.5px solid rgba(255,255,255,0.28);
     pointer-events: none;
@@ -869,6 +869,21 @@ html, body {
 /* Top chip of each stack has a brighter sheen */
 .chip-coin-top::after {
     background: linear-gradient(to bottom, rgba(255,255,255,0.5), transparent);
+}
+
+/* Value printed on each chip face */
+.chip-val {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.68rem;
+    font-weight: 900;
+    letter-spacing: 0.3px;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.7);
+    pointer-events: none;
+    z-index: 1;
 }
 
 .chip-stack-label {
@@ -1159,7 +1174,9 @@ html, body {
     .player-cards .card   { width: 80px;  height: 116px; }
     #community-cards .card { width: 120px; height: 168px; border-radius: 10px; }
     .pot-total { font-size: 1.4rem; }
-    .chip-coin { width: 44px; height: 15px; }
+    .chip-coin { width: 54px; height: 21px; }
+    .chip-coins { width: 54px; }
+    .chip-val { font-size: 0.58rem; }
     .chip-stack-label { font-size: 0.62rem; }
     .chips-total { font-size: 0.9rem; }
 }
@@ -1174,7 +1191,9 @@ html, body {
     #blind-info { font-size: 1.4rem; }
     .key-label kbd { font-size: 1rem; }
     .key-action { font-size: 0.78rem; }
-    .chip-coin { width: 66px; height: 22px; }
+    .chip-coin { width: 80px; height: 32px; }
+    .chip-coins { width: 80px; }
+    .chip-val { font-size: 0.82rem; }
     .chip-stack-label { font-size: 0.9rem; padding: 3px 8px; }
     .chips-total { font-size: 1.3rem; }
     .hh-row-cards .card { width: 42px; height: 58px; }

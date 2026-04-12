@@ -82,8 +82,8 @@ const UI = (() => {
 
         return `<div class="chip-stacks-row">${stacks.map(s => {
             const vis = Math.min(s.count, 10);
-            const STEP = 7;    // px between chips in stack
-            const FACE_H = 18; // px height of ellipse face
+            const STEP = 10;   // px between chips in stack
+            const FACE_H = 26; // px height of ellipse face
             const stackH = FACE_H + (vis - 1) * STEP;
             // idx 0 = bottom chip, idx vis-1 = top chip
             const coins = Array.from({ length: vis }, (_, idx) => {
@@ -91,7 +91,7 @@ const UI = (() => {
                 const bottom = idx * STEP;
                 const sideCol = `color-mix(in srgb,${s.bg} 55%,#000)`;
                 const dropCol = `color-mix(in srgb,${s.bg} 30%,#000)`;
-                return `<div class="chip-coin${isTop ? ' chip-coin-top' : ''}" style="bottom:${bottom}px;z-index:${idx+1};background:${s.bg};box-shadow:0 ${STEP}px 0 ${sideCol},0 ${STEP+4}px 6px ${dropCol}"></div>`;
+                return `<div class="chip-coin${isTop ? ' chip-coin-top' : ''}" style="bottom:${bottom}px;z-index:${idx+1};background:${s.bg};box-shadow:0 ${STEP}px 0 ${sideCol},0 ${STEP+5}px 7px ${dropCol}"><span class="chip-val" style="color:${s.fg}">${s.label}</span></div>`;
             }).join('');
             const lbl = s.count > 10
                 ? `${s.count}&times;&thinsp;${s.label}`
