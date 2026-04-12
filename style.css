@@ -514,7 +514,7 @@ html, body {
     justify-content: center;
     margin-bottom: 4px;
 }
-.pot-chips .chip-3d-stack    { transform: scale(0.78); transform-origin: bottom center; }
+.pot-chips .chip-3d-stack    { zoom: 0.78; }
 .pot-chips .chip-stack-label { font-size: 0.62rem; padding: 2px 4px; }
 
 .pot-total {
@@ -802,8 +802,7 @@ html, body {
 }
 
 .player-right-col .chip-3d-stack {
-    transform: scale(0.72);
-    transform-origin: bottom center;
+    zoom: 0.65;
 }
 
 .player-right-col .chip-stack-label {
@@ -876,8 +875,8 @@ html, body {
     position: absolute;
     left: 0;
     right: 0;
-    top: 10%;
-    bottom: 0;
+    top: 0;
+    bottom: 40%;
     display: flex;
     align-items: center;
     justify-content: center;
