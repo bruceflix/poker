@@ -975,7 +975,7 @@ html, body {
 .action-check  { color: #7ec8e3; }
 .action-call   { color: #a8e6a3; }
 .action-raise  { color: #ffd700; }
-.action-allin  { color: #ff6b6b; }
+.action-allin  { color: #ff6b6b; font-size: 1.1rem; }
 
 /* Acknowledgment prompts */
 .ack-prompt {
