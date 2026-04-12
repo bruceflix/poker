@@ -607,8 +607,12 @@ const UI = (() => {
             });
         }
 
+        // True when only one player still has chips — this handOver ends the game
+        const isLastHand = state.phase === 'handOver' &&
+            state.players.filter(p => !p.eliminated && p.chips > 0).length === 1;
+
         state.players.forEach((p, i) => {
-            updatePlayer(state, p, i, ackInfo);
+            updatePlayer(state, p, i, ackInfo, isLastHand);
         });
 
         // Record last hand result (for the pill display), but don't show central overlay
@@ -817,7 +821,7 @@ const UI = (() => {
         el.className = state.blindTimeRemaining <= 30 ? 'timer-warning' : '';
     }
 
-    function updatePlayer(state, p, i, ackInfo = null) {
+    function updatePlayer(state, p, i, ackInfo = null, isLastHand = false) {
         const section = document.getElementById(`player-${i}`);
         if (!section) return;
 
@@ -881,7 +885,7 @@ const UI = (() => {
                 cardsEl.innerHTML = buildHandHistoryInline(p, state);
             } else if (p.eliminated || p.cards.length === 0) {
                 cardsEl.innerHTML = '';
-            } else if ((state.phase === 'showdown' || state.phase === 'handOver') && !p.folded) {
+            } else if ((state.phase === 'showdown' || (state.phase === 'handOver' && isLastHand)) && !p.folded) {
                 cardsEl.innerHTML = p.cards.map(c => renderCard(c, true)).join('');
             } else if (Controls.isPeeking(i)) {
                 cardsEl.innerHTML = p.cards.map(c => renderCard(c, true)).join('');
@@ -919,7 +923,8 @@ const UI = (() => {
                     }
                 }
                 if (isWinner) {
-                    betEl.textContent = winnerHand ? `\u2605 ${winnerHand.handName}` : '\u2605 WINS POT';
+                    const showHand = winnerHand && (state.phase === 'showdown' || isLastHand);
+                    betEl.textContent = showHand ? `\u2605 ${winnerHand.handName}` : '\u2605 WINS POT';
                     betEl.className = 'player-bet-label player-result-winner';
                 } else if (loserHand) {
                     betEl.textContent = loserHand.handName;
