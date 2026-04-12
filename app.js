@@ -394,7 +394,13 @@ const App = (() => {
         }
     }
 
-    return { start, togglePause };
+    function returnToMenu() {
+        Game.stopBlindTimer();
+        Controls.destroy();
+        start();
+    }
+
+    return { start, togglePause, returnToMenu };
 })();
 
 // ---- SAVE/LOAD ----

@@ -471,6 +471,7 @@ const UI = (() => {
                     <button id="pauseBtn" class="table-btn" title="Pause/Resume">&#9646;&#9646;</button>
                     <button id="muteBtn" class="table-btn" title="Mute/Unmute">${Audio.isMuted() ? '🔇' : '🔊'}</button>
                     <button id="settingsBtn" class="table-btn" title="Settings">&#9881;</button>
+                    <button id="quitBtn" class="table-btn table-btn-quit" title="Quit to Menu">&#10006;</button>
                 </div>
                 <div id="pause-banner" class="hidden">PAUSED</div>
                 <div id="center-info">
@@ -513,6 +514,11 @@ const UI = (() => {
             const nowMuted = Audio.toggleMute();
             e.currentTarget.textContent = nowMuted ? '🔇' : '🔊';
         });
+        document.getElementById('quitBtn')?.addEventListener('click', () => {
+            App.togglePause(true);
+            showConfirmDialog('Quit to main menu?', () => App.returnToMenu(), () => App.togglePause(false));
+        });
+
         document.getElementById('settingsBtn')?.addEventListener('click', () => {
             App.togglePause(true); // force pause
             showSettingsOverlay(state);
@@ -1054,6 +1060,30 @@ const UI = (() => {
         }).join('');
 
         return `<div class="hh-inline">${rows}</div>`;
+    }
+
+    // ---- CONFIRM DIALOG ----
+    function showConfirmDialog(message, onConfirm, onCancel) {
+        const overlay = document.getElementById('settings-overlay');
+        if (!overlay) return;
+        overlay.classList.remove('hidden');
+        overlay.innerHTML = `
+            <div class="confirm-dialog">
+                <p class="confirm-msg">${escHtml(message)}</p>
+                <div class="confirm-btns">
+                    <button id="confirmYes" class="confirm-btn confirm-btn-yes">Yes, Quit</button>
+                    <button id="confirmNo"  class="confirm-btn confirm-btn-no">Cancel</button>
+                </div>
+            </div>
+        `;
+        overlay.querySelector('#confirmYes').addEventListener('click', () => {
+            overlay.classList.add('hidden');
+            onConfirm?.();
+        });
+        overlay.querySelector('#confirmNo').addEventListener('click', () => {
+            overlay.classList.add('hidden');
+            onCancel?.();
+        });
     }
 
     // ---- SETTINGS OVERLAY ----

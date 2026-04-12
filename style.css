@@ -1237,6 +1237,65 @@ html, body {
     background: rgba(0,0,0,0.7);
 }
 
+.table-btn-quit {
+    border-color: rgba(200,60,60,0.5);
+    color: rgba(220,80,80,0.85);
+}
+.table-btn-quit:hover {
+    border-color: #ff4444;
+    color: #ff4444;
+    background: rgba(0,0,0,0.7);
+}
+
+/* Confirm dialog — reuses settings-overlay backdrop */
+.confirm-dialog {
+    background: rgba(15,15,15,0.97);
+    border: 1px solid rgba(201,162,39,0.35);
+    border-radius: 16px;
+    padding: 40px 48px;
+    text-align: center;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.8);
+    max-width: 380px;
+    width: 90%;
+}
+
+.confirm-msg {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #f0e6c8;
+    letter-spacing: 1px;
+    margin: 0 0 28px;
+}
+
+.confirm-btns {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+}
+
+.confirm-btn {
+    padding: 12px 32px;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+    cursor: pointer;
+    border: none;
+    transition: opacity 0.15s, transform 0.1s;
+}
+.confirm-btn:hover { opacity: 0.85; transform: scale(1.04); }
+.confirm-btn:active { transform: scale(0.97); }
+
+.confirm-btn-yes {
+    background: #b71c1c;
+    color: #fff;
+}
+.confirm-btn-no {
+    background: rgba(255,255,255,0.1);
+    color: #ccc;
+    border: 1px solid rgba(255,255,255,0.2);
+}
+
 /* Pause banner */
 #pause-banner {
     position: fixed;
