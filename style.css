@@ -689,6 +689,25 @@ html, body {
     align-items: stretch;
 }
 
+/* ---- Lock player section to a stable height so nothing jumps ---- */
+
+/* Cards always reserve their full slot — prevents collapse during deal animation */
+.player-cards {
+    min-height: 152px;
+}
+
+/* Chip coins always reserve the maximum possible height (10-chip stack).
+   JS sets inline height per render; min-height keeps it at the max floor. */
+.player-right-col .chip-coins {
+    min-height: 130px;
+}
+
+/* Keys area always holds its full-keyboard height — prevents growth when
+   a player becomes active and buttons appear. */
+.player-keys {
+    min-height: 52px;
+}
+
 .player-section.active-player {
     border-color: #ffd700;
     box-shadow: 0 0 25px rgba(255,215,0,0.5), inset 0 0 15px rgba(255,215,0,0.1);
@@ -1177,6 +1196,8 @@ html, body {
 @media (max-width: 1200px) {
     .player-section { width: 320px; padding: 7px 10px; }
     .player-cards .card   { width: 80px;  height: 116px; }
+    .player-cards { min-height: 116px; }
+    .player-keys  { min-height: 44px; }
     #community-cards .card { width: 120px; height: 168px; border-radius: 10px; }
     .pot-total { font-size: 1.4rem; }
     .chip-coin { width: 54px; height: 21px; }
@@ -1190,6 +1211,8 @@ html, body {
     /* 4K / 2K — edge-hugging handled by JS; scale content up */
     .player-section { width: 460px; padding: 14px 18px; }
     .player-cards .card   { width: 130px; height: 190px; }
+    .player-cards { min-height: 190px; }
+    .player-keys  { min-height: 64px; }
     #community-cards .card { width: 220px; height: 308px; border-radius: 16px; }
     .player-name { font-size: 1.5rem; }
     .pot-total { font-size: 2.4rem; }
@@ -1643,7 +1666,7 @@ html, body {
 }
 
 .your-turn-indicator.hidden {
-    display: none;
+    visibility: hidden;
 }
 
 @keyframes yourTurnFlash {
