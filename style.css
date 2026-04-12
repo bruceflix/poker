@@ -70,12 +70,12 @@ html, body {
 
 /* Hero header */
 .config-brand {
-    font-family: Georgia, 'Times New Roman', serif;
-    font-style: italic;
-    font-size: 2.6rem;
-    font-weight: 700;
-    letter-spacing: 12px;
-    text-transform: none;
+    font-family: 'Segoe UI', 'Arial', sans-serif;
+    font-style: normal;
+    font-size: 2.2rem;
+    font-weight: 900;
+    letter-spacing: 10px;
+    text-transform: uppercase;
     background: linear-gradient(160deg, #fff5c0 0%, #f5d060 25%, #ffd700 50%, #c9a227 70%, #f5d060 85%, #fff0a0 100%);
     background-size: 200% 200%;
     -webkit-background-clip: text;
