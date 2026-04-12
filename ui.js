@@ -207,16 +207,17 @@ const UI = (() => {
                     <div class="config-section">
                         <label>Seat Assignment</label>
                         <div class="seat-row">
-                            <button class="seat-btn active" data-seat="random">Random</button>
-                            <button class="seat-btn" data-seat="manual">As Entered</button>
+                            <button class="seat-btn" data-seat="random">Random</button>
+                            <button class="seat-btn active" data-seat="manual">As Entered</button>
                         </div>
                     </div>
 
                     <div class="config-section">
                         <label>Buy-in per Player</label>
                         <div class="buyin-row">
+                            <button class="buyin-btn active" data-buyin="0">None</button>
                             ${[5,10,20,50].map(v =>
-                                `<button class="buyin-btn ${v===10?'active':''}" data-buyin="${v}">&pound;${v}</button>`
+                                `<button class="buyin-btn" data-buyin="${v}">&pound;${v}</button>`
                             ).join('')}
                             <input type="number" id="customBuyin" placeholder="Custom" min="1" step="1">
                         </div>
@@ -233,9 +234,23 @@ const UI = (() => {
         let playerCount = 4;
         let startingChips = 5000;
         let blindPreset = 'standard';
-        let seatMode = 'random';
-        let buyIn = 10;
+        let seatMode = 'manual';
+        let buyIn = 0;
         currentBgIndex = 0;
+
+        const AI_NAMES = [
+            'Doctor Doom','Captain Chaos','Baron Von Fold','Lady Luckystrikes',
+            'Turbo Tilt','Professor Pocket','Señor All-In','The Grim Caller',
+            'Commander Raisealot','El Foldo Grande','Sir Bluffs-a-Lot',
+            'The Pot Goblin','Ace McSmasher','Rex Reckless','Princess Pot-Steal',
+            'Bandit McBet','Captain Overcall','Count Rakeula','General Tilt',
+            'Bluffmaster Flash','Doctor Showdown','Lady Donkament','Sgt Shove-It',
+            'Madame Fullhouse','The Dark Raiser','Mega Muck','Zap Overdrive',
+            'Sly McRivercard','Thunderfold McGee','The Magnificent Bluff',
+        ];
+        function randomAIName() {
+            return AI_NAMES[Math.floor(Math.random() * AI_NAMES.length)];
+        }
 
         function calcPrizes(pool, count) {
             // Tiers: 1st=50%, 2nd=25%, 3rd=15%, 4th=10%. Only pay places that exist.
@@ -256,6 +271,7 @@ const UI = (() => {
         function renderPrizes() {
             const el = document.getElementById('prizeBreakdown');
             if (!el) return;
+            if (buyIn === 0) { el.innerHTML = ''; return; }
             const pool   = buyIn * playerCount;
             const prizes = calcPrizes(pool, playerCount);
             const labels = ['1st', '2nd', '3rd', '4th'];
@@ -273,17 +289,26 @@ const UI = (() => {
             // Preserve values across re-renders (e.g. player count change)
             const prevNames = Array.from(div.querySelectorAll('.player-name-input')).map(el => el.value);
             const prevAI    = Array.from(div.querySelectorAll('.player-ai-check')).map(el => el.checked);
+            const isFirst   = prevAI.length === 0;
             div.innerHTML = '';
             for (let i = 0; i < playerCount; i++) {
                 const row = document.createElement('div');
                 row.className = 'name-input-row';
-                const keyHint  = CONSTANTS.KEY_MAP[i].join(' ').toUpperCase();
-                const nameVal  = prevNames[i] !== undefined ? prevNames[i] : `Player ${i+1}`;
-                const aiChecked = prevAI[i] ? ' checked' : '';
+                const keyHint   = CONSTANTS.KEY_MAP[i].join(' ').toUpperCase();
+                const aiDefault = isFirst ? (i > 0) : (prevAI[i] ?? (i > 0));
+                const aiChecked = aiDefault ? ' checked' : '';
+                let nameVal;
+                if (prevNames[i] !== undefined && prevNames[i] !== '') {
+                    nameVal = prevNames[i];
+                } else if (i === 0) {
+                    nameVal = 'Player 1';
+                } else {
+                    nameVal = randomAIName();
+                }
                 row.innerHTML = `
                     <span class="seat-num">P${i+1}</span>
                     <input type="text" class="player-name-input" data-index="${i}"
-                           placeholder="Player ${i+1}" maxlength="12" value="${escHtml(nameVal)}">
+                           placeholder="Player ${i+1}" maxlength="16" value="${escHtml(nameVal)}">
                     <label class="ai-label"><input type="checkbox" class="player-ai-check" data-index="${i}"${aiChecked}> AI</label>
                     <span class="key-hint">Keys: ${keyHint}</span>
                 `;
@@ -378,6 +403,16 @@ const UI = (() => {
 
         renderNameInputs();
         renderPrizes();
+
+        // Auto-fill funny name when AI is ticked on a default-named player
+        document.getElementById('playerNameInputs').addEventListener('change', (e) => {
+            if (!e.target.classList.contains('player-ai-check')) return;
+            const idx = parseInt(e.target.dataset.index);
+            const nameInput = document.querySelector(`.player-name-input[data-index="${idx}"]`);
+            if (e.target.checked && (!nameInput.value || nameInput.value === `Player ${idx+1}`)) {
+                nameInput.value = randomAIName();
+            }
+        });
 
         document.getElementById('startGameBtn')?.addEventListener('click', () => {
             const inputs   = container.querySelectorAll('.player-name-input');
