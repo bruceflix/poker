@@ -82,17 +82,22 @@ const UI = (() => {
 
         return `<div class="chip-stacks-row">${stacks.map(s => {
             const vis = Math.min(s.count, 10);
-            // idx 0 = top chip; gets highest z-index so it visually sits on top
-            const slices = Array.from({ length: vis }, (_, idx) => {
-                const isTop = idx === 0;
-                const mt = isTop ? '' : 'margin-top:-4px;';
-                return `<div class="chip-slice${isTop ? ' chip-slice-top' : ''}" style="${mt}z-index:${vis - idx};background:${s.bg};border-top-color:${s.bd}"></div>`;
+            const STEP = 7;    // px between chips in stack
+            const FACE_H = 18; // px height of ellipse face
+            const stackH = FACE_H + (vis - 1) * STEP;
+            // idx 0 = bottom chip, idx vis-1 = top chip
+            const coins = Array.from({ length: vis }, (_, idx) => {
+                const isTop = idx === vis - 1;
+                const bottom = idx * STEP;
+                const sideCol = `color-mix(in srgb,${s.bg} 55%,#000)`;
+                const dropCol = `color-mix(in srgb,${s.bg} 30%,#000)`;
+                return `<div class="chip-coin${isTop ? ' chip-coin-top' : ''}" style="bottom:${bottom}px;z-index:${idx+1};background:${s.bg};box-shadow:0 ${STEP}px 0 ${sideCol},0 ${STEP+4}px 6px ${dropCol}"></div>`;
             }).join('');
             const lbl = s.count > 10
                 ? `${s.count}&times;&thinsp;${s.label}`
                 : `${s.count > 1 ? s.count + '&times;&thinsp;' : ''}${s.label}`;
             return `<div class="chip-3d-stack">
-                ${slices}
+                <div class="chip-coins" style="height:${stackH + STEP + 4}px">${coins}</div>
                 <div class="chip-stack-label" style="background:${s.bg};color:${s.fg}">${lbl}</div>
             </div>`;
         }).join('')}</div>`;

@@ -514,7 +514,7 @@ html, body {
     justify-content: center;
     margin-bottom: 4px;
 }
-.pot-chips .chip-slice       { width: 38px; height: 9px; border-top-width: 4px; }
+.pot-chips .chip-3d-stack    { transform: scale(0.78); transform-origin: bottom center; }
 .pot-chips .chip-stack-label { font-size: 0.62rem; padding: 2px 4px; }
 
 .pot-total {
@@ -801,10 +801,9 @@ html, body {
     gap: 4px 6px;
 }
 
-.player-right-col .chip-slice {
-    width: 36px;
-    height: 9px;
-    border-top-width: 4px;
+.player-right-col .chip-3d-stack {
+    transform: scale(0.72);
+    transform-origin: bottom center;
 }
 
 .player-right-col .chip-stack-label {
@@ -828,36 +827,48 @@ html, body {
     align-items: center;
 }
 
-/* One chip disc viewed from the side */
-.chip-slice {
-    width: 52px;
-    height: 12px;
-    border-radius: 4px 4px 2px 2px;
-    border-top: 5px solid transparent;  /* lighter edge — color set inline */
-    border-bottom: 2px solid rgba(0,0,0,0.4);
+/* Absolute-positioned coin container — grows upward */
+.chip-coins {
     position: relative;
+    width: 54px;
 }
 
-/* Stripe inlays on the chip edge */
-.chip-slice::after {
+/* One chip disc — ellipse face viewed from slight angle above */
+.chip-coin {
+    position: absolute;
+    width: 54px;
+    height: 18px;
+    border-radius: 50%;
+    left: 0;
+    /* box-shadow (side edge + drop) set inline per denomination */
+}
+
+/* Inner ring decoration */
+.chip-coin::before {
     content: '';
     position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    background: repeating-linear-gradient(
-        to right,
-        transparent 0,        transparent 26%,
-        rgba(255,255,255,0.22) 26%, rgba(255,255,255,0.22) 36%,
-        transparent 36%,      transparent 64%,
-        rgba(255,255,255,0.22) 64%, rgba(255,255,255,0.22) 74%,
-        transparent 74%
-    );
+    inset: 2px 7px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(255,255,255,0.28);
     pointer-events: none;
 }
 
-/* Topmost chip gets a shadow so it "floats" above the rest */
-.chip-slice-top {
-    box-shadow: 0 -4px 10px rgba(0,0,0,0.55);
+/* Face highlight sheen */
+.chip-coin::after {
+    content: '';
+    position: absolute;
+    top: 1px;
+    left: 14%;
+    right: 14%;
+    height: 52%;
+    background: linear-gradient(to bottom, rgba(255,255,255,0.32), transparent);
+    border-radius: 50% 50% 0 0;
+    pointer-events: none;
+}
+
+/* Top chip of each stack has a brighter sheen */
+.chip-coin-top::after {
+    background: linear-gradient(to bottom, rgba(255,255,255,0.5), transparent);
 }
 
 .chip-stack-label {
@@ -1148,7 +1159,7 @@ html, body {
     .player-cards .card   { width: 80px;  height: 116px; }
     #community-cards .card { width: 120px; height: 168px; border-radius: 10px; }
     .pot-total { font-size: 1.4rem; }
-    .chip-slice { width: 42px; height: 10px; border-top-width: 4px; }
+    .chip-coin { width: 44px; height: 15px; }
     .chip-stack-label { font-size: 0.62rem; }
     .chips-total { font-size: 0.9rem; }
 }
@@ -1163,7 +1174,7 @@ html, body {
     #blind-info { font-size: 1.4rem; }
     .key-label kbd { font-size: 1rem; }
     .key-action { font-size: 0.78rem; }
-    .chip-slice { width: 65px; height: 15px; border-top-width: 6px; }
+    .chip-coin { width: 66px; height: 22px; }
     .chip-stack-label { font-size: 0.9rem; padding: 3px 8px; }
     .chips-total { font-size: 1.3rem; }
     .hh-row-cards .card { width: 42px; height: 58px; }
