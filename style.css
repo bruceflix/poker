@@ -72,16 +72,24 @@ html, body {
 .config-brand {
     font-family: Georgia, 'Times New Roman', serif;
     font-style: italic;
-    font-size: 1.5rem;
-    font-weight: 400;
-    letter-spacing: 8px;
+    font-size: 2.6rem;
+    font-weight: 700;
+    letter-spacing: 12px;
     text-transform: none;
-    background: linear-gradient(135deg, #f5d060 0%, #c9a227 40%, #f5d060 70%, #a07818 100%);
+    background: linear-gradient(160deg, #fff5c0 0%, #f5d060 25%, #ffd700 50%, #c9a227 70%, #f5d060 85%, #fff0a0 100%);
+    background-size: 200% 200%;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    opacity: 0.75;
-    margin-bottom: 10px;
+    filter: drop-shadow(0 0 12px rgba(255, 210, 60, 0.6)) drop-shadow(0 2px 4px rgba(0,0,0,0.8));
+    animation: brandShimmer 3s ease-in-out infinite;
+    margin-bottom: 6px;
+}
+
+@keyframes brandShimmer {
+    0%   { background-position: 0% 50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
 }
 
 .config-hero {
