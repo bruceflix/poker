@@ -349,7 +349,6 @@ const Game = (() => {
             state.actedThisRound = new Set([...state.actedThisRound, playerIndex]);
         }
 
-        Audio.allIn();
         advanceAction();
         return true;
     }
