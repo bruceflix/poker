@@ -154,12 +154,12 @@ const Audio = (() => {
         },
 
         allIn() {
-            // Slam of chips + second crash wave
-            play(rnd('collide3','collide4'), 0.95);
-            play(rnd('collide1','collide2'), 0.7, 140);
-            play(rnd('stack5','stack6'), 0.6, 280);
-            // Voice callout — delayed 2s so chip sounds settle first
-            setTimeout(() => speak('All in!', { pitch: 0.7, rate: 0.82, volume: 1.0 }), 2000);
+            // Slam of chips + second crash wave — 1s after action to clear bet confirm sounds
+            play(rnd('collide3','collide4'), 0.95, 1000);
+            play(rnd('collide1','collide2'), 0.7,  1140);
+            play(rnd('stack5','stack6'),     0.6,  1280);
+            // Voice callout — 2s after the chip crash
+            setTimeout(() => speak('All in!', { pitch: 0.7, rate: 0.82, volume: 1.0 }), 3000);
         },
 
         win() {
