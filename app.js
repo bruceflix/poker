@@ -397,9 +397,14 @@ const App = (() => {
                 betAmt = Math.min(maxR, minR + (mult - 1) * bb);
                 betAmt = Math.max(minR, betAmt);
             }
+            // Detect all-in raise (bet equals max possible) and play all-in audio
+            if (betAmt >= maxR) Audio.allIn();
             // Call Game.raise directly — notify() fires → onStateUpdate → UI.updateTable → scheduleAITurn chains
             Game.raise(playerIndex, betAmt);
         } else if (action === 'call') {
+            // Detect all-in call (chips can't cover the full call amount)
+            const toCall = state.currentBet - p.bet;
+            if (p.chips <= toCall) Audio.allIn();
             Game.call(playerIndex);
         } else if (action === 'check') {
             Game.check(playerIndex);

@@ -573,7 +573,9 @@ const Game = (() => {
         }
         // Flag so the UI can delay announcing results until all cards are revealed
         state.ranOutBoard = true;
-        Audio.cardFlip();
+        // Small delay so any fold/action sound that triggered runOutBoard isn't
+        // immediately masked by the card flip sound
+        setTimeout(() => Audio.cardFlip(), 150);
         doShowdown();
     }
 
