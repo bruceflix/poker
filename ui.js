@@ -928,6 +928,9 @@ const UI = (() => {
                     betEl.textContent = '';
                     betEl.className = 'player-bet-label';
                 }
+            } else if (p.folded && !p.eliminated) {
+                betEl.innerHTML = `<span class="bet-action-word action-fold">FOLD</span>`;
+                betEl.className = 'player-bet-label';
             } else {
                 const activeBettingPhase = ['preflop', 'flop', 'turn', 'river'].includes(state.phase);
                 const hasAmount = activeBettingPhase && p.bet > 0 && p.lastAction !== 'CHECK' && p.lastAction !== 'FOLD';

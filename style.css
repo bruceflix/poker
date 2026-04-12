@@ -971,7 +971,7 @@ html, body {
 }
 
 /* Last-action word colour variants (used on .bet-action-word) */
-.action-fold   { color: rgba(255,255,255,0.45); }
+.action-fold   { color: rgba(255,255,255,0.72); font-size: 1.1rem; }
 .action-check  { color: #7ec8e3; }
 .action-call   { color: #a8e6a3; }
 .action-raise  { color: #ffd700; }
