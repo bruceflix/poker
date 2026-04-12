@@ -933,7 +933,7 @@ html, body {
    so this label is naturally readable by all players at the table. */
 .player-bet-label {
     position: absolute;
-    top: -46px;
+    top: -40px;
     left: 50%;
     transform: translateX(-50%);
     white-space: nowrap;
@@ -1666,7 +1666,7 @@ html, body {
 }
 
 .your-turn-indicator.hidden {
-    visibility: hidden;
+    display: none;
 }
 
 @keyframes yourTurnFlash {
