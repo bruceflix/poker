@@ -727,7 +727,13 @@ const Game = (() => {
         player.chips += total;
         state.pots = [{ amount: 0, eligible: [] }];
         state.phase = 'handOver';
-        state.showdownResults = [{ pot: total, winners: [{ name: player.name, seatIndex: player.seatIndex }] }];
+        // Evaluate winner's best hand if enough cards are out
+        let winnerHand = null;
+        const allCards = [...player.cards, ...state.communityCards];
+        if (allCards.length >= 5) {
+            try { winnerHand = HandEvaluator.evaluate(allCards); } catch (e) {}
+        }
+        state.showdownResults = [{ pot: total, winners: [{ name: player.name, seatIndex: player.seatIndex, hand: winnerHand }] }];
         if (total > 0) Audio.win();
         notify();
     }

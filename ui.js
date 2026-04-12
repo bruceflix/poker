@@ -881,7 +881,7 @@ const UI = (() => {
                 cardsEl.innerHTML = buildHandHistoryInline(p, state);
             } else if (p.eliminated || p.cards.length === 0) {
                 cardsEl.innerHTML = '';
-            } else if ((state.phase === 'showdown') && !p.folded) {
+            } else if ((state.phase === 'showdown' || state.phase === 'handOver') && !p.folded) {
                 cardsEl.innerHTML = p.cards.map(c => renderCard(c, true)).join('');
             } else if (Controls.isPeeking(i)) {
                 cardsEl.innerHTML = p.cards.map(c => renderCard(c, true)).join('');
