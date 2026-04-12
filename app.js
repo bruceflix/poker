@@ -14,16 +14,11 @@ const App = (() => {
     let aiTimer        = null;  // pending setTimeout handle
     let aiAckScheduled = new Set(); // seat indices for which an auto-ACK is already queued
 
-    // All-in sound lockout — blocks actions until the full sound sequence finishes
-    let allInLockout     = false;
-    let allInLockTimer   = null;
-    const ALL_IN_LOCK_MS = 3300; // matches audio: 1s chip crash + 2s before voice
-
-    function setAllInLockout() {
-        allInLockout = true;
-        clearTimeout(allInLockTimer);
-        allInLockTimer = setTimeout(() => { allInLockout = false; }, ALL_IN_LOCK_MS);
-    }
+    // All-in sound lockout — blocks all actions and delays Game.allIn() until
+    // sounds finish: chip crash (0–400ms) + voice starts at 600ms + voice is 2s = 2700ms total
+    let allInLockout   = false;
+    let allInLockTimer = null;
+    const ALL_IN_LOCK_MS = 2750; // chip crash + 600ms offset + ~2s voice + 150ms buffer
 
     function getAckInfo() {
         return playersToAck.length
@@ -257,8 +252,12 @@ const App = (() => {
                 break;
             case 'allIn':
                 Audio.allIn();
-                setAllInLockout();
-                Game.allIn(playerIndex);
+                allInLockout = true;
+                clearTimeout(allInLockTimer);
+                allInLockTimer = setTimeout(() => {
+                    allInLockout = false;
+                    Game.allIn(playerIndex);  // state update + next turn happen here
+                }, ALL_IN_LOCK_MS);
                 break;
             case 'adjustBet':
                 Game.adjustBet(data);
@@ -315,10 +314,7 @@ const App = (() => {
 
         if (aiTimer !== null) return; // already scheduled
 
-        const baseDelay = 1600 + Math.random() * 900; // 1600–2500 ms
-        // If all-in lockout is active, wait for it to clear first
-        const extraDelay = allInLockout ? ALL_IN_LOCK_MS : 0;
-        const delay = baseDelay + extraDelay;
+        const delay = 1600 + Math.random() * 900; // 1600–2500 ms
         aiTimer = setTimeout(() => {
             aiTimer = null;
             executeAIAction(pi);
