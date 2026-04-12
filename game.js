@@ -630,15 +630,17 @@ const Game = (() => {
     }
 
     function addToPots(amount, eligible) {
-        // Try to merge with last pot if same eligible set
+        // Try to merge with last pot if same eligible set, or if new eligible is a
+        // subset of the last (players folded between rounds — not an all-in side pot).
         const last = state.pots[state.pots.length - 1];
         const sameEligible = last && last.eligible.length === eligible.length &&
             last.eligible.every(e => eligible.includes(e));
-        if (sameEligible) {
-            // Replace last pot with updated amount — new object reference
+        const isSubset = last && eligible.every(e => last.eligible.includes(e));
+        if (sameEligible || isSubset) {
+            // Replace last pot with updated amount and narrowed eligible set
             state.pots = [
                 ...state.pots.slice(0, -1),
-                { ...last, amount: last.amount + amount }
+                { ...last, amount: last.amount + amount, eligible: [...eligible] }
             ];
         } else {
             state.pots = [...state.pots, { amount, eligible: [...eligible] }];
