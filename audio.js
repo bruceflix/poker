@@ -87,6 +87,8 @@ const Audio = (() => {
     load('collide2', 'chips-collide-2.ogg');
     load('collide3', 'chips-collide-3.ogg');
     load('collide4', 'chips-collide-4.ogg');
+    // All-in voice callout
+    load('allInVoice', 'allin.ogg');
     // Notifications
     load('bong',     'bong_001.ogg');
     load('confirm1', 'confirmation_001.ogg');
@@ -159,7 +161,7 @@ const Audio = (() => {
             play(rnd('collide1','collide2'), 0.7,  1140);
             play(rnd('stack5','stack6'),     0.6,  1280);
             // Voice callout — 2s after the chip crash
-            setTimeout(() => speak('All in!', { pitch: 0.7, rate: 0.82, volume: 1.0 }), 3000);
+            play('allInVoice', 1.0, 3000);
         },
 
         win() {
