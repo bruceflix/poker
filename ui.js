@@ -144,6 +144,7 @@ const UI = (() => {
 
         container.innerHTML = `
             <div class="config-hero">
+                <div class="config-brand">Brett's</div>
                 <div class="suit-row">&#9824; &#9829; &#9827; &#9830;</div>
                 <h1>Texas Hold'em</h1>
                 <p>Tournament Setup</p>

@@ -69,6 +69,21 @@ html, body {
 .config-container::after  { bottom: 14px; right: 20px; }
 
 /* Hero header */
+.config-brand {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-style: italic;
+    font-size: 1.5rem;
+    font-weight: 400;
+    letter-spacing: 8px;
+    text-transform: none;
+    background: linear-gradient(135deg, #f5d060 0%, #c9a227 40%, #f5d060 70%, #a07818 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    opacity: 0.75;
+    margin-bottom: 10px;
+}
+
 .config-hero {
     text-align: center;
     padding: 36px 40px 24px;
