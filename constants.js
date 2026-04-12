@@ -13,7 +13,7 @@ const CONSTANTS = {
 
     // ---- CHIP DENOMINATIONS ----
     CHIP_DENOMS: [
-        { v: 1000, bg: '#B71C1C', bd: '#FF5252', fg: '#fff', label: '1K'  },
+        { v: 1000, bg: '#B71C1C', bd: '#FF5252', fg: '#fff', label: '1000' },
         { v: 500,  bg: '#7D6608', bd: '#D4AC0D', fg: '#fff', label: '500' },
         { v: 100,  bg: '#1C1C1C', bd: '#757575', fg: '#fff', label: '100' },
         { v: 50,   bg: '#0D2F7E', bd: '#4472CA', fg: '#fff', label: '50'  },

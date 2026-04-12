@@ -93,12 +93,8 @@ const UI = (() => {
                 const dropCol = `color-mix(in srgb,${s.bg} 30%,#000)`;
                 return `<div class="chip-coin${isTop ? ' chip-coin-top' : ''}" style="bottom:${bottom}px;z-index:${idx+1};background:${s.bg};box-shadow:0 ${STEP}px 0 ${sideCol},0 ${STEP+5}px 7px ${dropCol}"><span class="chip-val" style="color:${s.fg}">${s.label}</span></div>`;
             }).join('');
-            const lbl = s.count > 10
-                ? `${s.count}&times;&thinsp;${s.label}`
-                : `${s.count > 1 ? s.count + '&times;&thinsp;' : ''}${s.label}`;
             return `<div class="chip-3d-stack">
                 <div class="chip-coins" style="height:${stackH + STEP + 4}px">${coins}</div>
-                <div class="chip-stack-label" style="background:${s.bg};color:${s.fg}">${lbl}</div>
             </div>`;
         }).join('')}</div>`;
     }
