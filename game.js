@@ -94,7 +94,14 @@ const Game = (() => {
         if (!state) return null;
         return {
             ...state,
-            players:             state.players.map(p => ({ ...p, cards: p.cards.map(c => ({ ...c })) })),
+            players:             state.players.map(p => ({
+                ...p,
+                cards: p.cards.map(c => ({ ...c })),
+                handHistory: (p.handHistory || []).map(h => ({
+                    ...h,
+                    cards: (h.cards || []).map(c => ({ ...c }))
+                })),
+            })),
             communityCards:      state.communityCards.map(c => ({ ...c })),
             pots:                state.pots.map(p => ({ ...p, eligible: [...p.eligible] })),
             actedThisRound:      new Set(state.actedThisRound),
@@ -853,6 +860,28 @@ const Game = (() => {
         notify();
     }
 
+    function updateSettings(nameUpdates = [], newDuration = null) {
+        if (!state) return false;
+
+        for (const update of nameUpdates) {
+            if (!update || typeof update.idx !== 'number') continue;
+            const p = state.players[update.idx];
+            const nextName = typeof update.name === 'string' ? update.name.trim() : '';
+            if (!p || p.eliminated || !nextName) continue;
+            p.name = nextName;
+        }
+
+        if (typeof newDuration === 'number' && Number.isFinite(newDuration) && newDuration > 0) {
+            const elapsed = Math.max(0, state.blindDuration - state.blindTimeRemaining);
+            state.blindDuration = Math.floor(newDuration);
+            state.blindTimeRemaining = Math.max(0, state.blindDuration - elapsed);
+            state.blindWarningPlayed = state.blindTimeRemaining <= 30 ? state.blindWarningPlayed : false;
+        }
+
+        notify();
+        return true;
+    }
+
     // Restore state from a saved game object — shallow-clone so future mutations
     // to live state do not corrupt the caller's saved copy.
     function restoreState(saved) {
@@ -883,7 +912,7 @@ const Game = (() => {
         enterBetSizing, adjustBet, cancelBetSizing, confirmBet,
         startBlindTimer, stopBlindTimer, advanceBlindLevel,
         smallBlind, bigBlind, activePlayers, playersInHand,
-        setUpdateCallback, cardStr, nextActiveFrom,
+        setUpdateCallback, cardStr, nextActiveFrom, updateSettings,
         RANK_SYMBOLS, SUIT_SYMBOLS, SUITS, BLIND_SCHEDULES
     };
 })();

@@ -2,6 +2,7 @@
 
 const Audio = (() => {
     let muted = localStorage.getItem('poker_muted') === '1';
+    let initialized = false;
 
     // --- Preloader ---
     const cache = {};
@@ -102,10 +103,14 @@ const Audio = (() => {
     load('gameOverJingle', 'jingles-hit_14.ogg');
 
     // Warm up audio on first keypress (browser autoplay policy)
-    document.addEventListener('keydown', () => {
+    function init() {
+        if (initialized) return;
+        initialized = true;
         Object.values(cache).forEach(a => a.load());
         loadVoices();
-    }, { once: true });
+    }
+
+    document.addEventListener('keydown', init, { once: true });
 
     // --- Public API ---
     function toggleMute() {
@@ -117,6 +122,7 @@ const Audio = (() => {
     function isMuted() { return muted; }
 
     return {
+        init,
         toggleMute,
         isMuted,
 

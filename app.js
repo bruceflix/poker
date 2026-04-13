@@ -9,16 +9,75 @@ const App = (() => {
     let ackedPlayers    = new Set();
     let ackedHandNumber = -1;
     let playersToAck    = [];
+    let ackAdvanceTimer = null;
 
     // AI turn scheduling
     let aiTimer        = null;  // pending setTimeout handle
     let aiAckScheduled = new Set(); // seat indices for which an auto-ACK is already queued
+    let aiAckTimers    = new Set();
+    let nextHandTimer  = null;
 
     // All-in sound lockout — blocks all actions and delays Game.allIn() until
     // sounds finish: chip crash (0–400ms) + voice starts at 600ms + voice is 2s = 2700ms total
     let allInLockout   = false;
     let allInLockTimer = null;
     const ALL_IN_LOCK_MS = 2750; // chip crash + 600ms offset + ~2s voice + 150ms buffer
+
+    function clearTransientTimers() {
+        if (aiTimer !== null) {
+            clearTimeout(aiTimer);
+            aiTimer = null;
+        }
+        if (ackAdvanceTimer !== null) {
+            clearTimeout(ackAdvanceTimer);
+            ackAdvanceTimer = null;
+        }
+        if (nextHandTimer !== null) {
+            clearTimeout(nextHandTimer);
+            nextHandTimer = null;
+        }
+        if (allInLockTimer !== null) {
+            clearTimeout(allInLockTimer);
+            allInLockTimer = null;
+        }
+        aiAckTimers.forEach(timer => clearTimeout(timer));
+        aiAckTimers = new Set();
+        aiAckScheduled = new Set();
+        allInLockout = false;
+    }
+
+    function queueAIAck(playerIndex, delay) {
+        const timer = setTimeout(() => {
+            aiAckTimers.delete(timer);
+            onPlayerAction(playerIndex, 'ack', null);
+        }, delay);
+        aiAckTimers.add(timer);
+    }
+
+    function beginAllInSequence(actionFn) {
+        clearTimeout(allInLockTimer);
+        allInLockTimer = null;
+
+        Audio.allIn();
+        allInLockout = true;
+        Game.setPaused(true);
+
+        const acted = actionFn();
+        if (!acted) {
+            allInLockout = false;
+            Game.setPaused(false);
+            return false;
+        }
+
+        allInLockTimer = setTimeout(() => {
+            allInLockTimer = null;
+            allInLockout = false;
+            Game.setPaused(false);
+            UI.updateTable(Game.getState(), getAckInfo());
+            scheduleAITurn();
+        }, ALL_IN_LOCK_MS);
+        return true;
+    }
 
     function getAckInfo() {
         return playersToAck.length
@@ -27,10 +86,14 @@ const App = (() => {
     }
 
     function start() {
+        clearTransientTimers();
         UI.showConfig(startGame);
     }
 
     function startGame(config, savedState) {
+        clearTransientTimers();
+        Audio.init?.();
+
         if (savedState) {
             // Restore saved game
             loadFromSave(savedState);
@@ -165,6 +228,14 @@ const App = (() => {
     }
 
     function dealNextHand() {
+        if (nextHandTimer !== null) {
+            clearTimeout(nextHandTimer);
+            nextHandTimer = null;
+        }
+        if (ackAdvanceTimer !== null) {
+            clearTimeout(ackAdvanceTimer);
+            ackAdvanceTimer = null;
+        }
         if (aiTimer !== null) { clearTimeout(aiTimer); aiTimer = null; }
         aiAckScheduled  = new Set();
         handInProgress  = true;
@@ -205,7 +276,7 @@ const App = (() => {
                     const delay = state.ranOutBoard
                         ? 8000 + Math.random() * 2000  // dramatic pause after full board runout
                         : 1200 + Math.random() * 800;
-                    setTimeout(() => onPlayerAction(pi, 'ack', null), delay);
+                    queueAIAck(pi, delay);
                 }
             }
         }
@@ -226,11 +297,15 @@ const App = (() => {
             handInProgress = false;
             Controls.destroy();
             UI.showGameOver(newState, () => {
+                clearTransientTimers();
                 Game.stopBlindTimer();
                 start();
             });
         } else {
-            setTimeout(() => dealNextHand(), 1000);
+            nextHandTimer = setTimeout(() => {
+                nextHandTimer = null;
+                dealNextHand();
+            }, 1000);
         }
     }
 
@@ -251,13 +326,7 @@ const App = (() => {
                 Game.enterBetSizing(playerIndex);
                 break;
             case 'allIn':
-                Audio.allIn();
-                allInLockout = true;
-                clearTimeout(allInLockTimer);
-                allInLockTimer = setTimeout(() => {
-                    allInLockout = false;
-                    Game.allIn(playerIndex);  // state update + next turn happen here
-                }, ALL_IN_LOCK_MS);
+                beginAllInSequence(() => Game.allIn(playerIndex));
                 break;
             case 'adjustBet':
                 Game.adjustBet(data);
@@ -283,9 +352,12 @@ const App = (() => {
                 ackedPlayers.add(playerIndex);
                 const allAcked = playersToAck.every(i => ackedPlayers.has(i));
                 UI.updateTable(state, getAckInfo());
-                if (allAcked) {
+                if (allAcked && ackAdvanceTimer === null) {
                     // Brief pause so the "all ready" state is visible before dealing
-                    setTimeout(() => finishAndAdvance(), 500);
+                    ackAdvanceTimer = setTimeout(() => {
+                        ackAdvanceTimer = null;
+                        finishAndAdvance();
+                    }, 500);
                 }
                 return;
             }
@@ -397,15 +469,24 @@ const App = (() => {
                 betAmt = Math.min(maxR, minR + (mult - 1) * bb);
                 betAmt = Math.max(minR, betAmt);
             }
-            // Detect all-in raise (bet equals max possible) and play all-in audio
-            if (betAmt >= maxR) Audio.allIn();
-            // Call Game.raise directly — notify() fires → onStateUpdate → UI.updateTable → scheduleAITurn chains
-            Game.raise(playerIndex, betAmt);
+            const isAllInRaise = betAmt >= maxR;
+            const success = isAllInRaise
+                ? beginAllInSequence(() => Game.raise(playerIndex, betAmt))
+                : Game.raise(playerIndex, betAmt);
+
+            if (!success) {
+                if (!canCheck) {
+                    if (p.chips <= (state.currentBet - p.bet)) beginAllInSequence(() => Game.call(playerIndex));
+                    else Game.call(playerIndex);
+                } else {
+                    Game.check(playerIndex);
+                }
+            }
         } else if (action === 'call') {
             // Detect all-in call (chips can't cover the full call amount)
             const toCall = state.currentBet - p.bet;
-            if (p.chips <= toCall) Audio.allIn();
-            Game.call(playerIndex);
+            if (p.chips <= toCall) beginAllInSequence(() => Game.call(playerIndex));
+            else Game.call(playerIndex);
         } else if (action === 'check') {
             Game.check(playerIndex);
         } else {
@@ -414,7 +495,9 @@ const App = (() => {
     }
 
     function returnToMenu() {
+        clearTransientTimers();
         Game.stopBlindTimer();
+        Game.setPaused(false);
         Controls.destroy();
         start();
     }

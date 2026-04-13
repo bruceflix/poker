@@ -1192,25 +1192,21 @@ const UI = (() => {
 
         // Resume
         document.getElementById('settingsResumeBtn')?.addEventListener('click', () => {
-            // Apply name changes
+            // Gather name changes and commit them through the real game engine
             const inputs = overlay.querySelectorAll('.settings-name-input');
+            const nameUpdates = [];
             inputs.forEach(inp => {
                 const idx = parseInt(inp.dataset.index);
                 const newName = inp.value.trim();
-                if (newName && !state.players[idx].eliminated) {
-                    state.players[idx].name = newName;
-                    const nameEl = document.querySelector(`#player-${idx} .player-name`);
-                    if (nameEl) nameEl.textContent = newName;
+                if (newName && !state.players[idx].eliminated && newName !== state.players[idx].name) {
+                    nameUpdates.push({ idx, name: newName });
                 }
             });
 
-            // Apply timer duration change
             const mins = parseInt(document.getElementById('settingsBlindMins')?.value) || 0;
             const secs = parseInt(document.getElementById('settingsBlindSecs')?.value) || 0;
             const newDuration = mins * 60 + secs;
-            if (newDuration > 0) {
-                state.blindDuration = newDuration;
-            }
+            Game.updateSettings(nameUpdates, newDuration > 0 ? newDuration : null);
 
             overlay.classList.add('hidden');
             App.togglePause(false); // force unpause
@@ -1220,9 +1216,7 @@ const UI = (() => {
         document.getElementById('settingsMenuBtn')?.addEventListener('click', () => {
             if (confirm('Return to menu? Unsaved progress will be lost.')) {
                 overlay.classList.add('hidden');
-                Game.stopBlindTimer();
-                Controls.destroy();
-                App.start();
+                App.returnToMenu();
             }
         });
     }
