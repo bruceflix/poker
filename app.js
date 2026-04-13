@@ -502,7 +502,11 @@ const App = (() => {
         start();
     }
 
-    return { start, togglePause, returnToMenu };
+    function isAllInLockout() {
+        return allInLockout;
+    }
+
+    return { start, togglePause, returnToMenu, isAllInLockout };
 })();
 
 // ---- SAVE/LOAD ----

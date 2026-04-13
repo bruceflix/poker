@@ -2,7 +2,7 @@
 
 A browser-based, multi-player Texas Hold'em tournament game for up to 8 players on a single keyboard. No frameworks, no dependencies — pure vanilla JS and CSS.
 
-![Version](https://img.shields.io/badge/version-v1.20.40-blue)
+![Version](https://img.shields.io/badge/version-v1.20.41-blue)
 
 ---
 

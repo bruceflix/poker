@@ -615,16 +615,19 @@ const UI = (() => {
         updateBlindTimer(state);
 
         // Pause banner
+        const pausedForAllIn = typeof App !== 'undefined' && App.isAllInLockout && App.isAllInLockout();
+        const showManualPause = state.paused && !pausedForAllIn;
+
         const pauseBanner = document.getElementById('pause-banner');
         if (pauseBanner) {
-            pauseBanner.classList.toggle('hidden', !state.paused);
+            pauseBanner.classList.toggle('hidden', !showManualPause);
         }
 
         // Pause button icon
         const pauseBtn = document.getElementById('pauseBtn');
         if (pauseBtn) {
-            pauseBtn.innerHTML = state.paused ? '&#9654;' : '&#9646;&#9646;';
-            pauseBtn.title = state.paused ? 'Resume' : 'Pause';
+            pauseBtn.innerHTML = showManualPause ? '&#9654;' : '&#9646;&#9646;';
+            pauseBtn.title = showManualPause ? 'Resume' : 'Pause';
         }
 
         // On every phase transition, force-clear all bet displays
@@ -1305,9 +1308,31 @@ const UI = (() => {
 
         const winner = state.players.find(p => !p.eliminated);
         const sorted = [...state.players].sort((a, b) => a.finishPosition - b.finishPosition);
+        const winnerResult = (state.showdownResults || [])
+            .flatMap(r => r.winners || [])
+            .find(w => winner && w.seatIndex === winner.seatIndex);
+        const winningHand = winnerResult?.hand || null;
+        const winnerHoleCards = winner?.cards?.length
+            ? `<div class="winner-best-cards">${winner.cards.map(c => renderCard(c, true)).join('')}</div>`
+            : '';
+        const bestFiveCards = winningHand?.cards?.length
+            ? `<div class="winner-best-cards gameover-best-five">${winningHand.cards.map(c => renderCard(c, true)).join('')}</div>`
+            : '';
+        const handSummary = winningHand
+            ? `
+                <div class="gameover-winning-hand">
+                    <div class="winner-hand-type">${escHtml(winningHand.handName)}</div>
+                    <div class="winner-hand-detail">${escHtml(winningHand.description)}</div>
+                    ${bestFiveCards}
+                </div>
+            `
+            : '';
 
         el.innerHTML = `<div class="game-over">
             <h2>\u{1F3C6} ${escHtml(winner.name)} WINS! \u{1F3C6}</h2>
+            <div class="gameover-hole-cards-label">Winner's Cards</div>
+            ${winnerHoleCards}
+            ${handSummary}
             <div class="final-standings">
                 <h3>Final Standings</h3>
                 ${sorted.map(p => `<div class="standing">${getOrdinal(p.finishPosition)} \u2014 ${escHtml(p.name)}</div>`).join('')}

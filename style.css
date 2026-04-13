@@ -648,6 +648,26 @@ html, body {
     margin-bottom: 10px;
 }
 
+.gameover-hole-cards-label {
+    font-size: 0.8rem;
+    color: #c9a227;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin: 6px 0 4px;
+}
+
+.game-over .winner-best-cards {
+    margin: 8px 0 10px;
+}
+
+.gameover-best-five {
+    margin-top: 8px;
+}
+
+.gameover-winning-hand {
+    margin: 4px 0 14px;
+}
+
 .standing {
     font-size: 1.1rem;
     padding: 5px 0;
