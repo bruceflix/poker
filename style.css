@@ -666,7 +666,7 @@ html, body {
 .player-section {
     position: absolute;
     width: 420px;
-    padding: 10px 14px 6px;
+    padding: 8px 12px 4px;
     border-radius: 12px;
     background: rgba(0,0,0,0.45);
     border: 2px solid rgba(255,255,255,0.1);
@@ -678,15 +678,15 @@ html, body {
 /* Top/bottom seats need a shorter footprint so their labels and cards clear the centre area. */
 .player-section.rot-0,
 .player-section.rot-180 {
-    padding: 7px 12px 4px;
+    padding: 6px 10px 3px;
 }
 
 .player-main-row {
     display: flex;
     flex-direction: row;
-    gap: 12px;
+    gap: 10px;
     align-items: flex-start;
-    margin-bottom: 4px;
+    margin-bottom: 2px;
 }
 
 .player-right-col {
@@ -700,19 +700,19 @@ html, body {
 
 /* Cards always reserve their full slot — prevents collapse during deal animation */
 .player-cards {
-    min-height: 152px;
+    min-height: 140px;
 }
 
 /* Chip coins always reserve the maximum possible height (10-chip stack).
    JS sets inline height per render; min-height keeps it at the max floor. */
 .player-right-col .chip-coins {
-    min-height: 130px;
+    min-height: 118px;
 }
 
 /* Keys area always holds its full-keyboard height — prevents growth when
    a player becomes active and buttons appear. */
 .player-keys {
-    min-height: 42px;
+    min-height: 38px;
 }
 
 .player-section.active-player {
@@ -1152,17 +1152,17 @@ html, body {
 }
 
 /* Player hole cards */
-.player-cards .card { width: 104px; height: 152px; }
+.player-cards .card { width: 96px; height: 140px; }
 
 .player-section.rot-0 .player-cards .card,
 .player-section.rot-180 .player-cards .card {
-    width: 96px;
-    height: 140px;
+    width: 90px;
+    height: 132px;
 }
 
 .player-section.rot-0 .player-cards,
 .player-section.rot-180 .player-cards {
-    min-height: 140px;
+    min-height: 132px;
 }
 
 /* Community cards */
