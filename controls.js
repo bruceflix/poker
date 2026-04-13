@@ -153,6 +153,25 @@ const Controls = (() => {
         }
     }
 
+    function startPeek(player) {
+        if (!initialized) return;
+        const state = getState();
+        if (!state || state.phase === 'gameOver') return;
+        const p = state.players[player];
+        if (!p || p.eliminated) return;
+        if (state.phase === 'showdown' || state.phase === 'handOver') return;
+
+        peekingPlayers.add(player);
+        if (onAction) onAction(player, 'peek', true);
+    }
+
+    function stopPeek(player) {
+        if (!initialized) return;
+        if (!peekingPlayers.has(player)) return;
+        peekingPlayers.delete(player);
+        if (onAction) onAction(player, 'peek', false);
+    }
+
     // Mouse click equivalent — same logic as handleKeyDown minus peek (hold) and keyup
     function triggerAction(player, keyIndex) {
         if (!initialized) return;
@@ -229,5 +248,5 @@ const Controls = (() => {
         return KEY_MAP[playerIndex];
     }
 
-    return { init, destroy, isPeeking, getKeyLabels, getKeyMap, triggerAction, KEY_MAP };
+    return { init, destroy, isPeeking, getKeyLabels, getKeyMap, triggerAction, startPeek, stopPeek, KEY_MAP };
 })();

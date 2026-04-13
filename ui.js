@@ -566,8 +566,24 @@ const UI = (() => {
             }
             const keyEl = e.target.closest('[data-keyindex]');
             if (!keyEl) return;
+            if (parseInt(keyEl.dataset.keyindex) === 0) return; // peek uses pointer hold, not click
             Controls.triggerAction(parseInt(keyEl.dataset.player), parseInt(keyEl.dataset.keyindex));
         });
+
+        const endPeek = (e) => {
+            const keyEl = e.target.closest('[data-keyindex="0"]');
+            if (!keyEl) return;
+            Controls.stopPeek(parseInt(keyEl.dataset.player));
+        };
+
+        document.getElementById('table')?.addEventListener('pointerdown', (e) => {
+            const keyEl = e.target.closest('[data-keyindex="0"]');
+            if (!keyEl) return;
+            Controls.startPeek(parseInt(keyEl.dataset.player));
+        });
+        document.getElementById('table')?.addEventListener('pointerup', endPeek);
+        document.getElementById('table')?.addEventListener('pointercancel', endPeek);
+        document.getElementById('table')?.addEventListener('pointerleave', endPeek);
     }
 
     function buildPlayerHTML(p, i) {
@@ -1027,8 +1043,8 @@ const UI = (() => {
             } else if (!p.isAI) {
                 const keys = Controls.getKeyMap(i);
                 keysEl.innerHTML =
-                    `<span class="key-label peek-only"><kbd>${keys[0].toUpperCase()}</kbd><span class="key-action">PEEK</span></span>` +
-                    `<span class="key-label peek-only"><kbd>${keys[1].toUpperCase()}</kbd><span class="key-action">HISTORY</span></span>`;
+                    `<span class="key-label peek-only" data-player="${i}" data-keyindex="0"><kbd>${keys[0].toUpperCase()}</kbd><span class="key-action">PEEK</span></span>` +
+                    `<span class="key-label peek-only" data-player="${i}" data-keyindex="1"><kbd>${keys[1].toUpperCase()}</kbd><span class="key-action">HISTORY</span></span>`;
             } else {
                 keysEl.innerHTML = ''; // AI players have no keyboard controls
             }
