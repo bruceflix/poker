@@ -674,6 +674,12 @@ html, body {
     box-sizing: border-box;
 }
 
+/* Top/bottom seats need a shorter footprint so their labels and cards clear the centre area. */
+.player-section.rot-0,
+.player-section.rot-180 {
+    padding: 7px 12px 4px;
+}
+
 .player-main-row {
     display: flex;
     flex-direction: row;
@@ -760,6 +766,12 @@ html, body {
     gap: 4px;
     justify-content: center;
     flex-shrink: 0;
+}
+
+.player-section.rot-0 .player-main-row,
+.player-section.rot-180 .player-main-row {
+    gap: 8px;
+    margin-bottom: 2px;
 }
 
 .badge {
@@ -953,12 +965,6 @@ html, body {
     align-items: center;
     gap: 0;
 }
-
-/* Top seats would otherwise project their bet label into the board area after rotation. */
-.player-section.rot-180 .player-bet-label {
-    top: auto;
-    bottom: -36px;
-}
 .bet-action-word {
     font-size: 0.65rem;
     font-weight: 700;
@@ -1146,6 +1152,17 @@ html, body {
 
 /* Player hole cards */
 .player-cards .card { width: 104px; height: 152px; }
+
+.player-section.rot-0 .player-cards .card,
+.player-section.rot-180 .player-cards .card {
+    width: 96px;
+    height: 140px;
+}
+
+.player-section.rot-0 .player-cards,
+.player-section.rot-180 .player-cards {
+    min-height: 140px;
+}
 
 /* Community cards */
 #community-cards .card { width: 186px; height: 258px; border-radius: 14px; }
