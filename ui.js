@@ -659,6 +659,8 @@ const UI = (() => {
         if (overlayEl) overlayEl.classList.add('hidden');
         const sd = document.getElementById('showdown-info');
         if (sd && state.phase !== 'gameOver') sd.classList.add('hidden');
+        const tableEl = document.getElementById('table');
+        if (tableEl && state.phase !== 'gameOver') tableEl.classList.remove('gameover-mode');
         updateLastHandDisplay(state);
 
         // Hand rank reference sheet — visible whenever a player's history panel is open
@@ -1306,6 +1308,8 @@ const UI = (() => {
     function showGameOver(state, onNewGame) {
         const el = document.getElementById('showdown-info');
         if (!el) return;
+        const tableEl = document.getElementById('table');
+        if (tableEl) tableEl.classList.add('gameover-mode');
         el.classList.remove('hidden');
 
         const winner = state.players.find(p => !p.eliminated);

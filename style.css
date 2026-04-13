@@ -602,6 +602,28 @@ html, body {
     display: none;
 }
 
+#table.gameover-mode #table-controls,
+#table.gameover-mode #pause-banner,
+#table.gameover-mode #community-cards,
+#table.gameover-mode #pot-display,
+#table.gameover-mode #blind-info,
+#table.gameover-mode #hand-info,
+#table.gameover-mode #blind-timer,
+#table.gameover-mode #blind-alert,
+#table.gameover-mode #last-hand-display,
+#table.gameover-mode #winner-overlay,
+#table.gameover-mode #player-sections {
+    display: none !important;
+}
+
+#table.gameover-mode #center-info {
+    transform: translate(-50%, -50%);
+}
+
+#table.gameover-mode #showdown-info {
+    margin-top: 0;
+}
+
 .showdown-results {
     background: rgba(0,0,0,0.7);
     padding: 15px 30px;
