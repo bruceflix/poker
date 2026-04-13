@@ -95,7 +95,7 @@ const Audio = (() => {
     load('confirm1', 'confirmation_001.ogg');
     load('confirm2', 'confirmation_002.ogg');
     load('confirm3', 'confirmation_003.ogg');
-    load('cashWin',  'confirmation_004.ogg');
+    load('cashWin',  'jingles-hit_10.ogg');
     load('error1',   'error_001.ogg');
     load('error2',   'error_002.ogg');
     // Jingles
