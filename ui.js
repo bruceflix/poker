@@ -1279,6 +1279,8 @@ const UI = (() => {
     }
 
     function recordHandResult(state) {
+        if (commAnimating || commRevealedCount < state.communityCards.length) return;
+
         // Only process once per hand
         if (state.handNumber === overlayShownForHand) return;
         overlayShownForHand = state.handNumber;
@@ -1289,6 +1291,7 @@ const UI = (() => {
 
         // Save for last-hand display pill
         lastHandResult = result;
+        Audio.win();
     }
 
     function updateLastHandDisplay(state) {

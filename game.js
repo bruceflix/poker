@@ -717,7 +717,6 @@ const Game = (() => {
         }
 
         state.showdownResults = results;
-        Audio.win();
         notify();
     }
 
