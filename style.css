@@ -986,6 +986,26 @@ html, body {
     align-items: center;
     gap: 0;
 }
+
+/* Top/bottom seats project directly into the middle area, so their bet labels
+   need a shorter reach than the side seats. */
+.player-section.rot-0 .player-bet-label,
+.player-section.rot-180 .player-bet-label {
+    top: -28px;
+    font-size: 1.5rem;
+    padding: 2px 8px;
+}
+
+.player-section.rot-0 .bet-amount-word,
+.player-section.rot-180 .bet-amount-word {
+    font-size: 1.3rem;
+}
+
+.player-section.rot-0 .bet-action-word,
+.player-section.rot-180 .bet-action-word {
+    font-size: 0.58rem;
+    letter-spacing: 2px;
+}
 .bet-action-word {
     font-size: 0.65rem;
     font-weight: 700;
