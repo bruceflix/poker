@@ -95,6 +95,7 @@ const Audio = (() => {
     load('confirm1', 'confirmation_001.ogg');
     load('confirm2', 'confirmation_002.ogg');
     load('confirm3', 'confirmation_003.ogg');
+    load('cashWin',  'confirmation_004.ogg');
     load('error1',   'error_001.ogg');
     load('error2',   'error_002.ogg');
     // Jingles
@@ -171,9 +172,7 @@ const Audio = (() => {
         },
 
         win() {
-            play(rnd('stack1','stack2','stack3'), 0.75);
-            play(rnd('collide1','collide2'), 0.5, 220);
-            setTimeout(() => play(rnd('winJingle','winJingle2'), 0.6), 400);
+            play('cashWin', 0.85);
         },
 
         blindsWarning() {
