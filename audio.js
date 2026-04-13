@@ -189,7 +189,8 @@ const Audio = (() => {
         },
 
         gameOver() {
-            play('gameOverJingle', 0.7);
+            play('cashWin', 0.9);
+            play(rnd('winJingle','winJingle2'), 0.75, 180);
         },
     };
 })();
