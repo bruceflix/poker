@@ -1340,15 +1340,15 @@ const UI = (() => {
         const winnerHoleCards = winner?.cards?.length
             ? `<div class="winner-best-cards">${winner.cards.map(c => renderCard(c, true)).join('')}</div>`
             : '';
-        const bestFiveCards = winningHand?.cards?.length
-            ? `<div class="winner-best-cards gameover-best-five">${winningHand.cards.map(c => renderCard(c, true)).join('')}</div>`
+        const communityCards = state.communityCards?.length
+            ? `<div class="winner-best-cards gameover-best-five">${state.communityCards.map(c => renderCard(c, true)).join('')}</div>`
             : '';
         const handSummary = winningHand
             ? `
                 <div class="gameover-winning-hand">
                     <div class="winner-hand-type">${escHtml(winningHand.handName)}</div>
                     <div class="winner-hand-detail">${escHtml(winningHand.description)}</div>
-                    ${bestFiveCards}
+                    ${communityCards}
                 </div>
             `
             : '';
