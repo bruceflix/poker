@@ -580,9 +580,11 @@ const Game = (() => {
         }
         // Flag so the UI can delay announcing results until all cards are revealed
         state.ranOutBoard = true;
-        // Small delay so any fold/action sound that triggered runOutBoard isn't
-        // immediately masked by the card flip sound
-        setTimeout(() => Audio.cardFlip(), 150);
+        // During an all-in lock the UI will delay and sequence the reveal audio itself.
+        // Outside of that path, keep a short gap so action sounds aren't masked.
+        if (!state.paused) {
+            setTimeout(() => Audio.cardFlip(), 150);
+        }
         doShowdown();
     }
 

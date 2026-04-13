@@ -715,8 +715,10 @@ const UI = (() => {
         const newCount  = total - commRevealedCount;
         // Runout: multiple new cards AND phase is already showdown (board ran out all at once)
         const isRunout  = newCount >= 2 && state.phase === 'showdown';
+        const allInLocked = typeof App !== 'undefined' && App.isAllInLockout && App.isAllInLockout();
+        const revealDuringAllIn = allInLocked && state.phase === 'showdown';
         const gapMs     = isRunout ? 1000 : 500; // ms between successive flips
-        const initialMs = isRunout ? 800  : 0;   // pause before very first card
+        const initialMs = revealDuringAllIn ? 900 : (isRunout ? 800 : 0);   // pause before very first card
 
         // Render initial state (backs for new cards) BEFORE setting commAnimating,
         // so the guard below won't block this first render.
