@@ -953,6 +953,12 @@ html, body {
     align-items: center;
     gap: 0;
 }
+
+/* Top seats would otherwise project their bet label into the board area after rotation. */
+.player-section.rot-180 .player-bet-label {
+    top: auto;
+    bottom: -36px;
+}
 .bet-action-word {
     font-size: 0.65rem;
     font-weight: 700;

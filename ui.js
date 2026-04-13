@@ -9,15 +9,48 @@ const UI = (() => {
     function getPositionsForCount(n) {
         const all = SEAT_POSITIONS.slice(0, 8);
         if (n >= 8) return all.map(p => ({ ...p }));
-        const mapping = {
-            2: [0, 4],
-            3: [0, 3, 5],
-            4: [0, 2, 4, 6],
-            5: [0, 2, 3, 5, 7],
-            6: [0, 1, 3, 4, 6, 7],
-            7: [0, 1, 2, 4, 5, 6, 7],
+        const layouts = {
+            2: [
+                { left: 50, top: 88, rot:   0 },  // 6 o'clock
+                { left: 50, top: 12, rot: 180 },  // 12 o'clock
+            ],
+            3: [
+                { left: 50, top: 88, rot:   0 },  // 6 o'clock
+                { left: 25, top: 12, rot: 180 },  // 10 o'clock
+                { left: 75, top: 12, rot: 180 },  // 2 o'clock
+            ],
+            4: [
+                { left: 50, top: 88, rot:   0 },  // 6 o'clock
+                { left:  8, top: 50, rot:  90 },  // 9 o'clock
+                { left: 50, top: 12, rot: 180 },  // 12 o'clock
+                { left: 92, top: 50, rot: 270 },  // 3 o'clock
+            ],
+            5: [
+                { left: 50, top: 88, rot:   0 },  // 6 o'clock
+                { left: 12, top: 66, rot:  90 },  // 8:30
+                { left: 28, top: 12, rot: 180 },  // 10:30
+                { left: 72, top: 12, rot: 180 },  // 1:30
+                { left: 88, top: 66, rot: 270 },  // 3:30
+            ],
+            6: [
+                { left: 25, top: 88, rot:   0 },  // 7 o'clock
+                { left:  8, top: 50, rot:  90 },  // 9 o'clock
+                { left: 25, top: 12, rot: 180 },  // 11 o'clock
+                { left: 75, top: 12, rot: 180 },  // 1 o'clock
+                { left: 92, top: 50, rot: 270 },  // 3 o'clock
+                { left: 75, top: 88, rot:   0 },  // 5 o'clock
+            ],
+            7: [
+                { left: 50, top: 88, rot:   0 },  // 6 o'clock
+                { left: 12, top: 72, rot:  90 },  // 7:30
+                { left:  8, top: 42, rot:  90 },  // 9:30
+                { left: 35, top: 12, rot: 180 },  // 11 o'clock
+                { left: 65, top: 12, rot: 180 },  // 1 o'clock
+                { left: 92, top: 42, rot: 270 },  // 2:30
+                { left: 88, top: 72, rot: 270 },  // 4:30
+            ],
         };
-        return (mapping[n] || []).map(i => ({ ...SEAT_POSITIONS[i] }));
+        return (layouts[n] || []).map(p => ({ ...p }));
     }
 
     // repositionPlayersToEdge: after DOM render, nudge each player section so
@@ -834,7 +867,8 @@ const UI = (() => {
             (isActive ? ' active-player' : '') +
             (p.eliminated ? ' eliminated' : '') +
             (p.folded ? ' folded' : '') +
-            (p.allIn ? ' all-in' : '');
+            (p.allIn ? ' all-in' : '') +
+            ` rot-${positions[i]?.rot ?? 0}`;
 
         const pos = positions[i];
         if (!pos) return;
